@@ -71,4 +71,4 @@ secureflow eval run --config examples/configs/secureflow.ollama.yml --llm-concur
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+AGPL-3.0. See [`LICENSE`](LICENSE). By contributing, you agree your contribution is licensed under the same terms.
