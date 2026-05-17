@@ -302,7 +302,7 @@ All four `scenario_pi_*` fixtures (comment-override, fake-review, role-injection
 
 - **Multi-file data-flow analysis is heuristic.** Path-based reachability and AST signals only; no full call graph or alias analysis. Catches the common single-file taint patterns; misses vulnerabilities that span multiple files.
 - **Patch verification has two tiers.** Patches for scanner-detected findings get a full scanner re-run on the patched tree (9 of 39 in the eval landed as `verified` this way). Patches for AI-discovered findings have no scanner rule to re-run against, so they go through the LLM-review path only and are marked `verified` or `unverified` based on the second-opinion verdict. Both tiers are surfaced to the reviewer with the verdict + concerns; nothing is auto-applied.
-- **Free-tier LLM quotas are tight.** Groq caps at ~30 RPM and 6K TPM. Gemini caps at 200 RPD. DeepSeek is paid (~$0.05 per PR with 10 patches).
+- **Free-tier LLM quotas are tight.** Groq caps at roughly 30 RPM and 6K TPM. Gemini caps at 200 RPD. DeepSeek is paid (approximately $0.05 per PR with 10 patches).
 - **Grype reports transitive-dependency CVEs.** Grype scans the whole resolved dependency tree, not just the diff. In a PR that bumps one direct dep, this can surface CVEs in the dep's transitive children that the reviewer did not directly choose. Documented as a known cost of using Grype rather than a manifest-diff-only tool.
 - **Local Ollama is supported via configuration but not exercised in the shipped CI workflow.** It works on the local CLI when the daemon is running; CI runners do not provision Ollama by default.
 
