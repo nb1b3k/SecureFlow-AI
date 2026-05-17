@@ -1,0 +1,14 @@
+scenario_id: scenario_17_private_key
+description: Hardcoded RSA private key block in a Python source file.
+labels:
+  - id: rsa_private_key
+    type: hardcoded_secret
+    file: config.py
+    line_range: [4, 9]
+    expected_severity: critical
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0
+notes: |
+  gitleaks's private-key rule catches BEGIN/END PRIVATE KEY blocks
+  regardless of key validity.

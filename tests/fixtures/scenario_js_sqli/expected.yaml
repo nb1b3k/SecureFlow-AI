@@ -1,0 +1,17 @@
+scenario_id: scenario_js_sqli
+description: |
+  SQL injection in a Node/Express handler. Tests the pipeline on non-Python
+  source files — semgrep's JS rules, AI Discovery on JavaScript, and the
+  patch_agent's diff synthesis on JS line ranges.
+labels:
+  - id: sqli_express_get_user
+    type: sql_injection
+    file: server.js
+    line_range: [14, 15]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+notes: |
+  Run with --repo tests/fixtures/scenario_js_sqli. Semgrep auto includes
+  `javascript.express.security.injection.tainted-sql-string` family rules
+  that catch this. AI Discovery should also catch it.

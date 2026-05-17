@@ -1,0 +1,207 @@
+# Map human-readable label `type` values (from each fixture's expected.yaml)
+# to the patterns we use to identify matching scanner / AI-Discovery findings.
+#
+# Each entry contains:
+#   scanner_rule_patterns: list of substring patterns matched (case-insensitive)
+#                          against a finding's rule_id, OR title if rule_id is
+#                          absent. Used for semgrep / bandit / gitleaks / grype.
+#   ai_title_keywords:     list of keywords matched against the title of an
+#                          ai_discovery finding (case-insensitive substring).
+#
+# Add entries here, not in code, so the eval truth-keeping stays data-driven.
+
+sql_injection:
+  scanner_rule_patterns:
+    - sqli
+    - sql-injection
+    - sql_injection
+    - sql.tainted-sql
+    - tainted-sql-string
+    - sqlalchemy-execute-raw
+    - django.injection.sql
+    - string-formatted-query    # semgrep go.lang.security.audit.database.string-formatted-query
+    - formatted-sql-string      # csharp/java families
+  ai_title_keywords:
+    - sql injection
+    - sqli
+
+command_injection:
+  scanner_rule_patterns:
+    - command-injection
+    - shell-injection
+    - subprocess-injection      # semgrep python.flask.security.injection.subprocess-injection
+    - dangerous-subprocess
+    - os-command
+    - dangerous-subshell        # semgrep ruby.lang.security.dangerous-subshell
+    - dangerous-spawn-shell     # semgrep javascript/typescript child_process families
+    - dangerous-exec
+    - detect-child-process      # semgrep javascript.lang.security.detect-child-process
+  ai_title_keywords:
+    - command injection
+    - os command
+    - shell execution
+
+ssrf:
+  scanner_rule_patterns:
+    - ssrf
+    - server-side-request-forgery
+  ai_title_keywords:
+    - ssrf
+    - server-side request forgery
+
+hardcoded_secret:
+  scanner_rule_patterns:
+    - aws-access-key
+    - aws-secret-key
+    - generic-api-key
+    - stripe-access-token
+    - github-pat
+    - jwt
+    - private-key
+    - hardcoded
+  ai_title_keywords:
+    - hardcoded secret
+    - hardcoded credential
+    - leaked credential
+
+vulnerable_dependency:
+  scanner_rule_patterns:
+    # Grype rule IDs are CVE-* or GHSA-*; any of those forms count.
+    - cve-
+    - ghsa-
+  ai_title_keywords:
+    - vulnerable dependency
+    - outdated package
+
+missing_authorization:
+  scanner_rule_patterns:
+    - missing-authorization
+    - missing-authz
+    - broken-access-control
+    - idor
+    - insecure-direct-object
+  ai_title_keywords:
+    - missing authorization
+    - missing access check
+    - missing authentication
+    - unauthenticated access
+    - broken access control
+
+insecure_deserialization:
+  scanner_rule_patterns:
+    - deserialization
+    - pickle
+    - yaml.load
+    - unsafe-yaml
+  ai_title_keywords:
+    - insecure deserialization
+    - unsafe deserialization
+
+open_redirect:
+  scanner_rule_patterns:
+    - open-redirect
+    - unsafe-redirect
+  ai_title_keywords:
+    - open redirect
+
+weak_crypto:
+  scanner_rule_patterns:
+    - weak-cryptography
+    - weak-hash
+    - md5
+    - sha1
+    - des-cipher
+  ai_title_keywords:
+    - weak cryptography
+    - weak hash
+    - weak cipher
+
+path_traversal:
+  scanner_rule_patterns:
+    - path-traversal
+    - directory-traversal
+  ai_title_keywords:
+    - path traversal
+    - directory traversal
+
+xss:
+  scanner_rule_patterns:
+    - xss
+    - cross-site-scripting
+    - raw-html-format     # semgrep python.django.security.injection.raw-html-format
+    - raw-html            # semgrep family for unsafe HTML construction
+    - unescaped-template
+  ai_title_keywords:
+    - cross-site scripting
+    - xss
+    - reflected html
+    - unescaped html
+
+xxe:
+  scanner_rule_patterns:
+    - xxe
+    - documentbuilderfactory-disallow-doctype
+    - documentbuilderfactory-disable-external-entities
+    - external-entity
+    - xml-external-entity
+    - lxml-in-etree-fromstring   # semgrep python xxe rule (back-compat with scenario_20)
+  ai_title_keywords:
+    - xxe
+    - xml external entity
+    - external entity expansion
+
+business_logic_flaw:
+  scanner_rule_patterns: []
+  ai_title_keywords:
+    - business logic
+    - logic flaw
+    - state machine
+    - race condition
+
+# IaC label types — match Checkov failed_check rule IDs (CKV_*).
+# Patterns are substring matches against the finding's rule_id; the
+# checkov agent emits the CKV id directly as `rule_id`.
+iac_public_s3:
+  scanner_rule_patterns:
+    - ckv_aws_20   # S3 bucket has public read access
+    - ckv_aws_53   # Account-level block public ACLs
+    - ckv_aws_54   # Account-level block public policy
+    - ckv_aws_55   # Account-level ignore public ACLs
+    - ckv_aws_56   # Account-level restrict public buckets
+  ai_title_keywords:
+    - public s3 bucket
+    - publicly accessible bucket
+    - bucket exposed
+
+iac_wildcard_iam:
+  scanner_rule_patterns:
+    - ckv_aws_1    # No wildcards in IAM Action
+    - ckv_aws_40   # No wildcards in IAM Resource
+    - ckv_aws_49   # No wildcard NotActions
+    - ckv_aws_62   # No wildcard in role assume policy
+    - ckv_aws_107  # Admin-* policies
+  ai_title_keywords:
+    - wildcard iam
+    - overly permissive iam
+    - iam admin policy
+
+iac_open_security_group:
+  scanner_rule_patterns:
+    - ckv_aws_24   # No 0.0.0.0/0 on port 22
+    - ckv_aws_25   # No 0.0.0.0/0 on port 3389
+    - ckv_aws_260  # No 0.0.0.0/0 on any TCP port
+  ai_title_keywords:
+    - security group open
+    - 0.0.0.0/0
+    - exposed port
+
+iac_container_root:
+  scanner_rule_patterns:
+    - ckv_docker_2  # No HEALTHCHECK
+    - ckv_docker_3  # USER not set (container runs as root)
+    - ckv_docker_4  # ADD over COPY
+    - ckv_docker_7  # :latest tag
+  ai_title_keywords:
+    - container as root
+    - dockerfile root
+    - dockerfile latest

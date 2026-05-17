@@ -1,0 +1,11 @@
+scenario_id: scenario_12_open_redirect
+description: Flask redirect() with user-supplied URL — open redirect.
+labels:
+  - id: open_redirect_go
+    type: open_redirect
+    file: vulnerable.py
+    line_range: [13, 14]
+    expected_severity: medium
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 1.0

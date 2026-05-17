@@ -1,0 +1,12 @@
+scenario_id: scenario_docs_only
+description: |
+  True negative — a docs-only "PR" with no code, no IaC, no manifests.
+  Every scanner should either skip cleanly or find nothing; AI agents
+  should emit empty `findings` / `threats` arrays. Decision: PASS.
+labels: []
+expected_decision: PASS
+expected_minimum_recall: 0.0
+expected_maximum_fp: 0
+notes: |
+  Validates the "graceful skip" contract for every parallel branch.
+  Fails if any scanner mis-fires on prose / markdown.

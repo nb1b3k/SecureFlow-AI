@@ -1,0 +1,65 @@
+# SecureFlow override config: Gemini backend, isolated patch-only test.
+#
+# Used to sanity-check the patch agent's Gemini path after the
+# PatchReplacement schema refactor (which moved both providers to a tight
+# 3-field LLM contract + difflib-synthesised diffs).
+#
+#   .venv/Scripts/secureflow.exe scan \
+#       --repo tests/fixtures/scenario_04_sqli_diff \
+#       --config .secureflow.gemini.patch.yml \
+#       --output reports/patch_smoke_gemini.json
+
+project:
+  name: secureflow-demo-gemini-patch
+
+llm:
+  provider: gemini
+  model: gemini-2.0-flash-lite
+  temperature: 0.1
+  max_tokens: 1024
+  cache: true
+
+scanners:
+  semgrep: {enabled: true, config: auto}
+  gitleaks: {enabled: true}
+  grype: {enabled: true}
+  syft: {enabled: true}
+  bandit: {enabled: false}
+
+ai_discovery:
+  # Off — scanner findings are enough to exercise the patch path.
+  enabled: false
+
+policy:
+  fail_on:
+    - critical_secret
+    - critical_cve
+    - high_confidence_injection
+    - confirmed_auth_bypass
+  warn_on:
+    - medium_ai_discovery
+    - low_confidence_high_impact
+    - outdated_dependency
+  minimum_fail_confidence: 0.80
+  minimum_warn_confidence: 0.50
+
+limits:
+  max_changed_files_for_ai: 5
+  max_findings_to_exploit_check: 0    # no exploitability LLM call
+  max_tokens_per_pr: 50000
+  max_llm_calls_per_pr: 5
+  max_llm_concurrency: 2
+  max_patch_concurrency: 2
+  max_patches_per_pr: 3
+  on_budget_exceeded: warn_and_skip_ai
+
+reporting:
+  post_pr_comment: false
+  output_json: true
+  output_markdown: true
+  output_sarif: false
+
+enrichment:
+  osv: true
+  nvd: false
+  mitre: true

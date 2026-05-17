@@ -1,0 +1,14 @@
+scenario_id: scenario_04_sqli_diff
+description: Classic SQL injection via string concatenation in a Flask handler.
+labels:
+  - id: sqli_get_user
+    type: sql_injection
+    file: vulnerable.py
+    line_range: [16, 17]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+notes: |
+  Run with --repo tests/fixtures/scenario_04_sqli_diff. Semgrep's
+  auto config catches the concatenation. The exploitability LLM step
+  should NOT downgrade this — the input is user-controlled (request.args).

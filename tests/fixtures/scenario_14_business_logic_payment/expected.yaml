@@ -1,0 +1,15 @@
+scenario_id: scenario_14_business_logic_payment
+description: Ships orders when payment_status is "pending" — pre-payment shipping.
+labels:
+  - id: pay_before_ship
+    type: business_logic_flaw
+    file: vulnerable.py
+    line_range: [18, 21]
+    expected_severity: high
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 0.5
+notes: |
+  Scanner-miss case: SAST tools have no semantic model of "payment". AI
+  Discovery should flag this with reasoning about the pending-state bug.
+  Expect TP=0 in scanners_only and TP=1 in secureflow_full.

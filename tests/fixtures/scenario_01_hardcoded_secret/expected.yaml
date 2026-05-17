@@ -1,0 +1,22 @@
+scenario_id: scenario_01_hardcoded_secret
+description: Hardcoded AWS + Stripe secrets in config.py
+labels:
+  - id: aws_key
+    type: hardcoded_secret
+    file: config.py
+    line_range: [4, 4]
+    expected_severity: critical
+    expected_decision_contribution: FAIL
+  - id: stripe_key
+    type: hardcoded_secret
+    file: config.py
+    line_range: [6, 6]
+    expected_severity: critical
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0
+expected_maximum_fp: 1
+notes: |
+  This fixture is exercised by the smoke test. With gitleaks installed, the
+  Secrets agent should find both AKIA-prefixed and sk_live_ patterns and the
+  Decision agent should return FAIL.

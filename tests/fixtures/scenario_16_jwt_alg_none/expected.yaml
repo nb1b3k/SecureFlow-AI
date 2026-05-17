@@ -1,0 +1,13 @@
+scenario_id: scenario_16_jwt_alg_none
+description: jwt.decode(verify_signature=False) — accepts any token, including alg:none.
+labels:
+  - id: jwt_no_verify
+    type: missing_authorization
+    file: vulnerable.py
+    line_range: [16, 17]
+    expected_severity: critical
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0
+notes: |
+  Semgrep python.jwt.security catches verify_signature=False patterns.

@@ -1,0 +1,18 @@
+scenario_id: scenario_xlang_java_xxe
+description: |
+  Java XXE: DocumentBuilderFactory.newInstance() without disabling external
+  entities, then parsing user-controlled XML from the request body.
+labels:
+  - id: java_xxe_documentbuilderfactory
+    type: xxe
+    file: Vulnerable.java
+    line_range: [17, 19]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+notes: |
+  Semgrep auto includes java.lang.security.audit.xxe.*
+  (DocumentBuilderFactoryDisableExternalEntities-checks). The `xxe`
+  label type needs to be added to label_aliases.yaml since the existing
+  scenario_20_xxe uses insecure_deserialization. Both types should be
+  acceptable — they map to the same CWE.

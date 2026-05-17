@@ -1,0 +1,11 @@
+scenario_id: scenario_11_xss
+description: Flask render_template_string with user input → Jinja injection + XSS.
+labels:
+  - id: xss_render
+    type: xss
+    file: vulnerable.py
+    line_range: [13, 14]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0

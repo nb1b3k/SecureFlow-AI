@@ -1,0 +1,16 @@
+scenario_id: scenario_08_path_traversal
+description: os.path.join with user input + send_file — classic path traversal.
+labels:
+  - id: path_traversal_download
+    type: path_traversal
+    file: vulnerable.py
+    line_range: [16, 18]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0
+notes: |
+  Semgrep's auto config does NOT currently catch os.path.join + send_file
+  without a more specific Flask/security rule pack. This scenario is a
+  "scanner miss → AI Discovery catches" demonstration; expect TP=0 in
+  scanners_only and TP=1 in secureflow_full.

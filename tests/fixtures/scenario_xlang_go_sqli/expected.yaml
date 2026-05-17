@@ -1,0 +1,15 @@
+scenario_id: scenario_xlang_go_sqli
+description: |
+  Go SQL injection: db.Query called with an fmt.Sprintf-built string
+  containing tainted input from r.URL.Query().Get("id").
+labels:
+  - id: go_sqli_db_query_sprintf
+    type: sql_injection
+    file: vulnerable.go
+    line_range: [17, 18]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+notes: |
+  Semgrep auto includes go.lang.security.audit.database.string-formatted-query.
+  May require adding `string-formatted-query` to sql_injection aliases.

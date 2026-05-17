@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "secureflow-ai"
+version = "0.1.0"
+description = "Agentic DevSecOps PR security reviewer combining scanners with LLM reasoning."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "Bibek Neupane" },
+]
+keywords = ["security", "devsecops", "sast", "llm", "pull-request", "github-actions"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "pydantic>=2.6,<3",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    # typer 0.13+ requires click 8.2+; semgrep pins click<8.2 — keep typer at 0.12.x
+    # so both can coexist in the same venv.
+    "typer>=0.12,<0.13",
+    "click>=8.0,<8.2",
+    "rich>=13.7",
+    "langgraph>=0.2",
+    "google-genai>=0.3",
+    # Tolerant JSON parser used as a fallback when an LLM returns
+    # almost-valid JSON (missing key quotes, unterminated strings near
+    # max_tokens, missing commas). Strict `json.loads` then `repair_json`
+    # then strict parse again — recovers without burning an extra LLM
+    # call on small syntactic errors. Pure-Python, ~10 KB.
+    "json-repair>=0.25",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "mypy>=1.8",
+    "ruff>=0.4",
+]
+ast = [
+    # Enables tree-sitter-based sensitive-file detection (design/06).
+    # Optional in v1; falls back to regex-only when not installed.
+    "tree-sitter-languages>=1.10",
+    "tree-sitter>=0.21",
+]
+
+[project.scripts]
+secureflow = "secureflow.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["secureflow*"]
+exclude = ["tests*", "design*"]
+
+[tool.setuptools.package-data]
+"secureflow.llm.prompts" = ["**/*.yaml"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+# Selected rule families:
+#   E   pycodestyle errors (real syntax/indent issues)
+#   F   pyflakes (unused imports, undefined names — actual bugs)
+#   I   isort (import order)
+#   B   bugbear (subtle correctness pitfalls)
+#   UP  pyupgrade (Python-version-appropriate idioms)
+# Notably NOT selected:
+#   SIM aesthetic simplifications (use ternary, combine `with`, etc.) —
+#       these tend to make code worse as often as better; the team can
+#       enable them later if everyone wants the same style.
+select = ["E", "F", "I", "B", "UP"]
+ignore = [
+    "E501",   # line-too-long: we set line-length=100; long docstrings are fine.
+    "B008",   # function-call-as-default: typer.Option(...) IS how Typer declares CLI options.
+    "B904",   # raise-from: many of our re-raises are intentional and don't need a `from`.
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test files commonly have unused imports for fixtures/parametrize markers,
+# and we sometimes import a schema only to reference it in a type comment.
+"tests/**/*.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-ra"

@@ -1,0 +1,24 @@
+scenario_id: scenario_iac_open_sg
+description: |
+  IaC fixture: AWS Security Group with 0.0.0.0/0 ingress on SSH (port 22)
+  and RDP (port 3389). Checkov should fire CKV_AWS_24, CKV_AWS_25 and the
+  generalised CKV_AWS_260.
+labels:
+  - id: ssh_open_to_world
+    type: iac_open_security_group
+    file: main.tf
+    line_range: [12, 17]
+    expected_severity: high
+    expected_decision_contribution: WARN
+  - id: rdp_open_to_world
+    type: iac_open_security_group
+    file: main.tf
+    line_range: [19, 24]
+    expected_severity: high
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 0.5
+notes: |
+  Recall depends on Checkov being installed. Without it, `iac_agent`
+  surfaces "not installed" in `scanner_errors` and the scenario reaches
+  PASS gracefully (no false positive).

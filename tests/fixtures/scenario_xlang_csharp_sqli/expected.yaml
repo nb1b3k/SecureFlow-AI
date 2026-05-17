@@ -1,0 +1,17 @@
+scenario_id: scenario_xlang_csharp_sqli
+description: |
+  C# SQL injection: SqlCommand built via string concatenation with
+  Request.QueryString["id"]. ASP.NET WebForms-flavored.
+labels:
+  - id: csharp_sqli_sqlcommand_concat
+    type: sql_injection
+    file: Vulnerable.cs
+    line_range: [18, 19]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+notes: |
+  Semgrep auto includes csharp.lang.security.audit.sqli.csharp-sqli and
+  csharp.dotnet.security.audit.formatted-sql-string. Both contain
+  recognizable substrings already in the sql_injection aliases (`sqli`,
+  `formatted-sql-string`).

@@ -1,0 +1,63 @@
+# Patch test config for the JS fixture using the local Ollama backend.
+#
+#   .venv/Scripts/secureflow.exe scan \
+#       --repo tests/fixtures/scenario_js_sqli \
+#       --config .secureflow.ollama.js.yml \
+#       --output reports/patch_smoke_js.json
+
+project:
+  name: secureflow-demo-ollama-js
+
+llm:
+  provider: ollama
+  model: qwen2.5-coder:3b
+  temperature: 0.1
+  max_tokens: 1024
+  cache: true
+
+scanners:
+  semgrep: {enabled: true, config: auto}
+  gitleaks: {enabled: true}
+  grype: {enabled: true}
+  syft: {enabled: true}
+  bandit: {enabled: false}
+
+ai_discovery:
+  # Enable so we exercise the LLM-on-JS path. Force-fire on any change
+  # because the path-based sensitive heuristic was tuned for Python.
+  enabled: true
+  run_on_all_prs: true
+
+policy:
+  fail_on:
+    - critical_secret
+    - critical_cve
+    - high_confidence_injection
+    - confirmed_auth_bypass
+  warn_on:
+    - medium_ai_discovery
+    - low_confidence_high_impact
+    - outdated_dependency
+  minimum_fail_confidence: 0.80
+  minimum_warn_confidence: 0.50
+
+limits:
+  max_changed_files_for_ai: 5
+  max_findings_to_exploit_check: 0
+  max_tokens_per_pr: 50000
+  max_llm_calls_per_pr: 10
+  max_llm_concurrency: 1
+  max_patch_concurrency: 1
+  max_patches_per_pr: 2     # cap (semgrep often fires multiple JS-SQLi rules)
+  on_budget_exceeded: warn_and_skip_ai
+
+reporting:
+  post_pr_comment: false
+  output_json: true
+  output_markdown: true
+  output_sarif: false
+
+enrichment:
+  osv: true
+  nvd: false
+  mitre: true

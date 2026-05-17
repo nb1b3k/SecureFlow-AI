@@ -1,0 +1,21 @@
+scenario_id: scenario_iac_gha_overprivileged
+description: |
+  IaC fixture (GitHub Actions): a workflow with `permissions: write-all`
+  plus `pull_request_target` checking out the head SHA. Both patterns
+  are textbook supply-chain risks. Checkov should fire CKV2_GHA_1 and
+  CKV_GHA_7 (or equivalents).
+labels:
+  - id: gha_write_all
+    type: iac_container_root  # closest alias in label_aliases.yaml — these are GHA-family CKV rules
+    file: .github/workflows/ci.yml
+    line_range: [16, 16]
+    expected_severity: high
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 0.0
+notes: |
+  Checkov-only finding. We use the iac_container_root alias as the
+  loosest match against the GHA family of CKV rules — label_aliases.yaml
+  doesn't yet have a GHA-specific entry. Recall=0.0 acceptable: the
+  primary signal is that the iac_agent fires + the policy engine
+  produces at least WARN.

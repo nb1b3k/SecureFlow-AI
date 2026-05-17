@@ -1,0 +1,19 @@
+scenario_id: scenario_iac_dockerfile_root
+description: |
+  IaC fixture (W4): Dockerfile uses :latest, runs as root (no USER),
+  pulls a remote shell script with ADD, and has no HEALTHCHECK.
+  Checkov should fire on CKV_DOCKER_3/4/7 at minimum.
+labels:
+  - id: container_root_user
+    type: iac_container_root
+    file: Dockerfile
+    line_range: [13, 16]
+    expected_severity: high
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 0.0
+notes: |
+  Recall depends on Checkov install. Without Checkov the scenario
+  expects PASS gracefully (eval runner reports "checkov: not installed"
+  in scanner_errors). expected_minimum_recall is 0.0 so the scenario
+  passes either way; presence/absence of the finding is the real signal.

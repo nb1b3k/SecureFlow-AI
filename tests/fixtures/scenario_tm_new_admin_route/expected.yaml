@@ -1,0 +1,25 @@
+scenario_id: scenario_tm_new_admin_route
+description: |
+  Threat-modeling fixture: a new `/admin/users/<id>` Flask route is
+  introduced with no authorization decorator, no audit log, and no
+  CSRF protection on the delete endpoint. The STRIDE delta agent
+  should flag this as `new_admin_route` with elevation_of_privilege
+  + information_disclosure categories.
+labels:
+  - id: admin_route_no_authz
+    type: missing_authorization
+    file: app.py
+    line_range: [22, 27]
+    expected_severity: high
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 0.0
+notes: |
+  This is primarily a demo fixture for the threat_model_delta agent
+  (W3). The deterministic policy engine WARNs based on the structural
+  signals; the strong signal comes from the threat-model section of
+  the markdown report — which the eval matcher does NOT currently
+  inspect (threat_model_findings lives in a separate state field
+  from final_findings). Recall=0 is acceptable here; the success
+  criterion is that the threat-model agent emits a `new_admin_route`
+  threat in its output.

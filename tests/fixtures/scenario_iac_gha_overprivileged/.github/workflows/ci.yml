@@ -1,0 +1,31 @@
+# Vulnerable GitHub Actions workflow — IaC eval fixture.
+#
+# Intended Checkov failures:
+#   - CKV2_GHA_1 — top-level `permissions: write-all` (over-permissioned)
+#   - CKV_GHA_7  — GITHUB_TOKEN scope is write-all rather than narrowed
+#
+# Intent: a workflow that grants every permission to every job, plus
+# uses `pull_request_target` which leaks the repo's secrets even to
+# untrusted forked PRs. Both patterns are textbook supply-chain risks.
+
+name: vulnerable-ci
+
+on:
+  pull_request_target:
+    types: [opened, synchronize]
+
+permissions: write-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Run untrusted PR build
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          echo "deploying ..."
+          ./scripts/deploy.sh

@@ -1,0 +1,23 @@
+scenario_id: scenario_xlang_ts_cmdi
+description: |
+  TypeScript/Express command injection: req.query.host is interpolated
+  into a template-literal shell command passed to child_process.exec.
+  Tests semgrep auto-config coverage on TypeScript files.
+labels:
+  - id: ts_cmdi_exec_template_literal
+    type: command_injection
+    file: server.ts
+    line_range: [10, 11]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+notes: |
+  Semgrep auto on .ts files routinely fires the
+  javascript.lang.security.detect-child-process family and the
+  typescript-specific equivalents on `exec(`...${tainted}...`)`. The
+  `detect-child-process` and `dangerous-exec` substrings are in the
+  command_injection label_aliases entry.
+
+  Originally this was an SSRF (req.query.url -> fetch) fixture, but
+  semgrep auto's TS SSRF coverage on plain node-fetch is sparse;
+  cmd-injection is the cleanest demonstration of TS file-type support.

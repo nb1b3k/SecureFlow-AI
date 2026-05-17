@@ -1,0 +1,17 @@
+scenario_id: scenario_xlang_php_sqli
+description: |
+  PHP SQL injection via $_GET concatenated into mysqli->query. Tests
+  semgrep auto-config coverage on PHP files.
+labels:
+  - id: php_sqli_mysqli_query
+    type: sql_injection
+    file: vulnerable.php
+    line_range: [8, 9]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+notes: |
+  Semgrep auto includes php.lab.security.injection.tainted-sql-string
+  and php.laravel.security.injection.tainted-sql-string-laravel.
+  The `tainted-sql-string` substring is already in the sql_injection
+  label_aliases entry, so no alias change should be required.

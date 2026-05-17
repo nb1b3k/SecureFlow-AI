@@ -1,0 +1,13 @@
+scenario_id: scenario_10_insecure_deser
+description: pickle.loads on request body — RCE.
+labels:
+  - id: pickle_loads
+    type: insecure_deserialization
+    file: vulnerable.py
+    line_range: [16, 17]
+    expected_severity: critical
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0
+notes: |
+  Semgrep python.lang.security.deserialization.pickle catches pickle.loads.

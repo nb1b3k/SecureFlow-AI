@@ -1,0 +1,186 @@
+# SecureFlow AI — comprehensive evaluation harness on CI
+#
+# Runs the labeled-fixture eval (`secureflow eval run`) in CI so the
+# README's "Latest results" section is reproducible on a vanilla Ubuntu
+# runner, not just the maintainer's laptop. The harness exercises both
+# the deterministic `scanners_only` baseline AND the full LLM-enabled
+# `secureflow_full` pipeline on every fixture under `tests/fixtures/`.
+#
+# Triggers:
+#   - pull_request that touches fixtures, the pipeline code, the config,
+#     or this workflow file. Skipped on docs-only PRs to save quota.
+#   - manual `workflow_dispatch` from the Actions tab.
+#
+# Why a separate workflow from the per-PR `secureflow.yml` scan: the
+# eval is slow (35-90 min for 40 scenarios × 2 modes on free-tier
+# rate limits + chain failover) and shouldn't gate every PR. Keeping
+# it on its own workflow lets it run only when fixture / pipeline
+# code changed, while the scan workflow stays fast for normal PRs.
+
+name: SecureFlow Eval Harness
+
+on:
+  pull_request:
+    paths:
+      - 'tests/fixtures/**'
+      - 'secureflow/**'
+      - '.secureflow.yml'
+      - '.github/workflows/eval.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# Don't pile up eval runs on rapid pushes — one in flight at a time per PR.
+concurrency:
+  group: eval-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  eval:
+    name: comprehensive eval
+    runs-on: ubuntu-latest
+    # Eval can take 60-90 min on free-tier rate limits + chain failover
+    # across 40 scenarios in two modes. Give it room.
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install SecureFlow + scanners
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install semgrep checkov
+
+      - name: Install gitleaks
+        run: |
+          GITLEAKS_VERSION=8.30.1
+          curl -sSL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar xz -C /tmp gitleaks
+          sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Install grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sudo sh -s -- -b /usr/local/bin
+          grype version | head -n 5
+
+      # Cache the LLM responses across eval runs so re-pushes don't
+      # re-bill every provider for the same prompts. Keyed on the head
+      # SHA AND the secureflow code hash so a prompt change invalidates.
+      - name: Cache LLM responses
+        uses: actions/cache@v4
+        with:
+          path: .secureflow_cache
+          key: eval-cache-${{ github.event.pull_request.head.sha || github.sha }}-${{ hashFiles('secureflow/llm/prompts/**', 'secureflow/agents/**') }}
+          restore-keys: |
+            eval-cache-
+
+      - name: Run comprehensive eval
+        env:
+          # All four providers wired in. The chain failover handles
+          # rate-limits / validation errors transparently — missing
+          # secrets just degrade the chain gracefully.
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_AI_API_KEY: ${{ secrets.OPENROUTER_AI_API_KEY }}
+        # `--llm-concurrency 1` keeps free-tier per-minute caps from
+        # tripping. Caps on findings-to-exploit and patches keep the
+        # token spend bounded per scenario. The scanners_only baseline
+        # is fast and always runs; secureflow_full does the heavy lift.
+        run: |
+          mkdir -p reports
+          secureflow eval run \
+            --output reports/eval_full.md \
+            --versions-out reports/eval_versions.yaml \
+            --llm-concurrency 1 \
+            --max-findings-to-exploit 15 \
+            --max-patches 5
+
+      # Always upload artifacts, even if eval exited non-zero — the
+      # partial report has diagnostic value.
+      - name: Upload eval reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-reports
+          path: |
+            reports/eval_full.md
+            reports/eval_full.json
+            reports/eval_versions.yaml
+          if-no-files-found: warn
+          retention-days: 30
+
+      # Post the aggregate metrics as a sticky PR comment so reviewers
+      # see the numbers without opening the artifact. The bot tag at
+      # the top lets the runner edit the comment on re-pushes instead
+      # of spamming.
+      - name: Post eval summary on PR
+        if: github.event_name == 'pull_request' && always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ ! -f reports/eval_full.md ]; then
+            echo "eval report missing; skipping comment"
+            exit 0
+          fi
+          # Pull the Aggregate section out of the eval report.
+          {
+            echo "<!-- secureflow-eval:bot-comment -->"
+            echo "# SecureFlow Eval Run"
+            echo ""
+            echo "Comprehensive evaluation against \`tests/fixtures/\` corpus."
+            echo ""
+            # Aggregate table starts at the top of the report.
+            awk '/^## Aggregate/,/^## Per-scenario breakdown/' reports/eval_full.md \
+              | head -n 20
+            echo ""
+            echo "Full per-scenario breakdown + JSON sidecar are in the workflow artifact \`eval-reports\`."
+          } > /tmp/eval_comment.md
+
+          # Find an existing eval comment to edit; else create one.
+          existing=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$REPO/issues/$PR_NUMBER/comments" \
+            | python -c "
+          import json, sys
+          for c in json.load(sys.stdin):
+              if 'secureflow-eval:bot-comment' in c.get('body', ''):
+                  print(c['id'])
+                  break
+          ")
+          body_json=$(python -c "
+          import json
+          with open('/tmp/eval_comment.md') as f:
+              print(json.dumps({'body': f.read()}))
+          ")
+          if [ -n "$existing" ]; then
+            curl -s -X PATCH \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$body_json" \
+              "https://api.github.com/repos/$REPO/issues/comments/$existing" > /dev/null
+            echo "Updated existing eval comment #$existing"
+          else
+            curl -s -X POST \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "$body_json" \
+              "https://api.github.com/repos/$REPO/issues/$PR_NUMBER/comments" > /dev/null
+            echo "Posted new eval comment"
+          fi

@@ -1,0 +1,24 @@
+secureflow_version: 0.1.0
+ran_at: '2026-05-17T18:23:48.628321+00:00'
+platform: Linux-6.17.0-1013-azure-x86_64-with-glibc2.39
+python: 3.11.15
+scanners:
+  semgrep: 1.163.0
+  gitleaks: 8.30.1
+  grype: 'Application:         grype
+
+    Version:             0.112.0
+
+    BuildDate:           2026-05-01T18:57:12Z
+
+    GitCommit:           244f2a10a5668078fcf771454bbd832b3a5b9e8a
+
+    GitDescription:      v0.112.0'
+llm:
+  provider: deepseek
+  model: deepseek-chat
+  temperature: 0.1
+enrichment:
+  osv: true
+  nvd: false
+  mitre: true

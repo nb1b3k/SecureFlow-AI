@@ -1,0 +1,13 @@
+scenario_id: scenario_19_ssl_verify_false
+description: requests.get(..., verify=False) — disabled TLS validation.
+labels:
+  - id: verify_false
+    type: weak_crypto
+    file: vulnerable.py
+    line_range: [12, 17]
+    expected_severity: medium
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 1.0
+notes: |
+  Semgrep python.requests.security.disabled-cert-validation catches this.

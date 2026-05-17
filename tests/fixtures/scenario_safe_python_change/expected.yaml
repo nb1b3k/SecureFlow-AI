@@ -1,0 +1,15 @@
+scenario_id: scenario_safe_python_change
+description: |
+  True negative — a small Python change that's deliberately secure:
+  parameterised SQL, env-loaded config, no hardcoded secrets, no
+  dangerous patterns. Pipeline should produce no blocking findings
+  and the policy engine should reach PASS.
+labels: []
+expected_decision: PASS
+expected_minimum_recall: 0.0
+expected_maximum_fp: 1
+notes: |
+  Validates the false-positive rate floor. expected_maximum_fp=1
+  allows one borderline semgrep finding (rare) without failing the
+  fixture, but more than that means the FP rate is genuinely too
+  high on clean code.

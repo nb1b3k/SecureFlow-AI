@@ -1,0 +1,45 @@
+scenario_id: scenario_combined_pr
+description: |
+  Combined fixture exercising every parallel scanner branch on one scan
+  target: vulnerable Python (SQLi + weak hash + hardcoded secret),
+  vulnerable Terraform (wildcard IAM), and a vulnerable Dockerfile
+  (no USER, :latest). The orchestrator's fan-out, the normalizer's
+  cross-stream dedup, and the policy engine's multi-source aggregation
+  are all exercised at once.
+labels:
+  - id: stripe_secret
+    type: hardcoded_secret
+    file: app.py
+    line_range: [12, 12]
+    expected_severity: critical
+    expected_decision_contribution: FAIL
+  - id: sqli_concat
+    type: sql_injection
+    file: app.py
+    line_range: [19, 19]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+  - id: weak_md5
+    type: weak_crypto
+    file: app.py
+    line_range: [27, 27]
+    expected_severity: medium
+    expected_decision_contribution: WARN
+  - id: iam_wildcard
+    type: iac_wildcard_iam
+    file: main.tf
+    line_range: [10, 18]
+    expected_severity: high
+    expected_decision_contribution: WARN
+  - id: dockerfile_root
+    type: iac_container_root
+    file: Dockerfile
+    line_range: [11, 14]
+    expected_severity: high
+    expected_decision_contribution: WARN
+expected_decision: FAIL
+expected_minimum_recall: 0.4
+notes: |
+  Decision should be FAIL because of the hardcoded stripe key AND the
+  SQLi. Other findings push the risk score up but a single critical
+  secret is enough.

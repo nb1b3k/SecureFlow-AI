@@ -1,0 +1,14 @@
+scenario_id: scenario_20_xxe
+description: lxml XMLParser with resolve_entities=True — classic XXE.
+labels:
+  - id: xxe_lxml
+    type: insecure_deserialization
+    file: vulnerable.py
+    line_range: [14, 16]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0
+notes: |
+  Semgrep python.lang.security.audit.xxe.lxml-in-etree-fromstring catches
+  this pattern. CWE-611 / OWASP A05:2021 — Security Misconfiguration.

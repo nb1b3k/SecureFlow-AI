@@ -1,0 +1,14 @@
+scenario_id: scenario_07_weak_crypto
+description: MD5 used for password hashing — no salt, no key-stretching.
+labels:
+  - id: md5_pwd_hash
+    type: weak_crypto
+    file: vulnerable.py
+    line_range: [11, 12]
+    expected_severity: medium
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 1.0
+notes: |
+  Semgrep auto includes python.lang.security.audit.md5-used / hashlib.md5
+  rules. Exploitability typically marks this as warning, not failing.

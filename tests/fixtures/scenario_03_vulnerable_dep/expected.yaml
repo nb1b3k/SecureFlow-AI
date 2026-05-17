@@ -1,0 +1,24 @@
+scenario_id: scenario_03_vulnerable_dep
+description: |
+  A requirements.txt that pins two known-vulnerable Python packages.
+  Exercises the dependency scope check + grype + OSV/NVD enrichment.
+labels:
+  - id: django_220_cves
+    type: vulnerable_dependency
+    file: requirements.txt
+    package: Django
+    version: 2.2.0
+    expected_severity: critical
+    expected_decision_contribution: FAIL
+  - id: requests_2200_cves
+    type: vulnerable_dependency
+    file: requirements.txt
+    package: requests
+    version: 2.20.0
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+notes: |
+  Run with --repo tests/fixtures/scenario_03_vulnerable_dep. Because there
+  is no git history inside the fixture, the dependency-manifest detector
+  will see requirements.txt in the file-walk fallback and run grype.

@@ -1,0 +1,26 @@
+scenario_id: scenario_iac_tf_public_s3
+description: |
+  IaC fixture (W4): Terraform declares a public-read S3 bucket and an
+  IAM policy with Action:* / Resource:*. Checkov should produce
+  several failed_checks; the iac_agent normalizes them and the
+  policy engine should at minimum WARN.
+labels:
+  - id: public_s3
+    type: iac_public_s3
+    file: main.tf
+    line_range: [10, 17]
+    expected_severity: high
+    expected_decision_contribution: WARN
+  - id: wildcard_iam
+    type: iac_wildcard_iam
+    file: main.tf
+    line_range: [19, 27]
+    expected_severity: high
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 0.5
+notes: |
+  Recall depends on Checkov being installed in the eval runner.
+  Without Checkov, the iac_agent surfaces "not installed" in
+  scanner_errors and the scenario gracefully falls back to PASS —
+  matched by `expected_maximum_fp` being unset rather than zero.

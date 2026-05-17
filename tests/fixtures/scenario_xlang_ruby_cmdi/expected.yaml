@@ -1,0 +1,16 @@
+scenario_id: scenario_xlang_ruby_cmdi
+description: |
+  Ruby/Sinatra command injection: backtick subshell with interpolated
+  params[:host]. Classic shell-execution-of-tainted-input pattern.
+labels:
+  - id: ruby_cmdi_backtick_interpolation
+    type: command_injection
+    file: vulnerable.rb
+    line_range: [10, 10]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+notes: |
+  Semgrep auto includes ruby.lang.security.audit.dangerous-exec
+  and ruby.rails.security.audit.dangerous-exec-or-shell-system family.
+  Backtick subshells trigger the same family of rules.

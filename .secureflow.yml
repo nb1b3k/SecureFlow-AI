@@ -1,0 +1,157 @@
+# SecureFlow AI configuration
+# This file lives at the root of the repo being scanned.
+# All keys are optional; defaults are sane.
+
+project:
+  name: secureflow-demo
+
+llm:
+  # Cross-provider failover chain: deepseek -> gemini -> groq -> openrouter.
+  #
+  # Strongest-first ordering: DeepSeek V3 is the most reliable for
+  # structured-output JSON across all our schemas (ExploitabilityResult,
+  # PatchReplacement, ThreatModelResponse, PatchReview). Per-call cost
+  # is ~$0.0024 on the paid prepaid balance — for a typical PR with
+  # 15-30 LLM calls, that's ~$0.05/PR; well worth the quality lift over
+  # free tiers that occasionally return mojibake or hit per-minute caps.
+  #
+  #   1. DeepSeek (`deepseek-chat`, V3) — primary. Paid prepaid. Highest
+  #      JSON reliability + reasoning quality of the four providers.
+  #   2. Gemini (`gemini-2.0-flash-lite`) — first free-tier fallback.
+  #      200 RPD free. Strong structured-output reliability.
+  #   3. Groq (`llama-3.1-8b-instant`) — fast free fallback. ~30 RPM /
+  #      ~6K TPM. Solid for the simpler schemas (AI Discovery).
+  #   4. OpenRouter (`deepseek/deepseek-v4-flash:free`) — last-resort
+  #      net. Generous quota but unreliable JSON (observed multi-
+  #      language mojibake on PatchReplacement); chain failover treats
+  #      its validation failures as transient.
+  provider: deepseek
+  model: deepseek-chat
+  fallback_providers: [gemini, groq, openrouter]
+
+  # Patch generation needs a stronger model than discovery /
+  # exploitability / threat-modeling because a garbage patch ends up
+  # spliced into the file and shown to the reviewer as the recommended
+  # fix. Pre-prod evidence: OpenRouter's free `deepseek-v4-flash:free`
+  # returned 1,092 tokens of multi-language mojibake (Chinese / Greek /
+  # math) for the `PatchReplacement` schema. Same model is fine on the
+  # simpler discovery schema; structured-output reliability falls apart
+  # on the patch task specifically.
+  #
+  # The patch chain deliberately skips OpenRouter free. DeepSeek `chat`
+  # (V3, paid prepaid) is the most reliable for tight JSON schemas at
+  # the cheapest paid rate (~$0.0024/call). Gemini is a solid second
+  # choice. Groq third as a free fallback. When DEEPSEEK_API_KEY is
+  # unset, the chain transparently starts at Gemini.
+  patch_provider: deepseek
+  patch_fallback_providers: [gemini, groq]
+
+  temperature: 0.1
+  max_tokens: 2048
+  cache: true
+
+limits:
+  # Serial LLM calls — no burst-tripping per-minute caps.
+  max_llm_concurrency: 1
+  max_patch_concurrency: 1
+
+scanners:
+  semgrep:
+    enabled: true
+    config: auto
+  gitleaks:
+    enabled: true
+  grype:
+    enabled: true
+  syft:
+    enabled: true
+  bandit:
+    enabled: false  # optional Python-specific
+  # Checkov scans IaC + DevOps config files statically — Terraform,
+  # Dockerfile, Compose, Kubernetes, Helm, CloudFormation, GH Actions
+  # workflows, plus committed IAM / bucket-policy JSON. No live cloud
+  # access required. The iac agent skips Checkov entirely when the PR
+  # touches zero IaC-shaped files, so leaving this `enabled: true` has
+  # no cost on application-only PRs.
+  checkov:
+    enabled: true
+
+ai_discovery:
+  enabled: true
+  run_on_all_prs: false
+  trigger_on_sensitive_files: true
+  # Filename-based fallback patterns (lowest priority — AST signals override these).
+  # See design/06 for the full AST signal list.
+  sensitive_patterns:
+    - auth
+    - login
+    - user
+    - admin
+    - payment
+    - billing
+    - permission
+    - role
+    - token
+    - session
+    - iam
+    - policy
+  exclusion_paths:
+    - tests/
+    - test/
+    - migrations/
+    - examples/
+    - docs/
+    - vendor/
+    - third_party/
+    - node_modules/
+
+reachability:
+  enabled: true
+  excluded_runtime_dirs: [tests, test, spec, specs, migrations, alembic, examples, samples, docs, vendor, third_party, node_modules]
+  runtime_dirs: [app, src, routes, handlers, api, services, controllers, lib]
+  enabled_languages: [python, javascript, typescript, go]
+
+policy:
+  fail_on:
+    - critical_secret
+    - critical_cve
+    - high_confidence_injection
+    - confirmed_auth_bypass
+  warn_on:
+    - medium_ai_discovery
+    - low_confidence_high_impact
+    - outdated_dependency
+  minimum_fail_confidence: 0.80
+  minimum_warn_confidence: 0.50
+
+limits:
+  max_changed_files_for_ai: 50
+  max_findings_to_exploit_check: 30
+  max_tokens_per_pr: 200000
+  max_llm_calls_per_pr: 50
+  # 2 stays under Gemini's 10-RPM free-tier rate limit while still parallelizing.
+  # Raise this on paid tiers or local Ollama.
+  max_llm_concurrency: 2
+  max_patch_concurrency: 2
+  max_patches_per_pr: 10
+  on_budget_exceeded: warn_and_skip_ai
+
+reporting:
+  post_pr_comment: true
+  output_json: true
+  output_markdown: true
+  output_sarif: true
+
+enrichment:
+  # External-API enrichment for findings. All best-effort; failures are
+  # logged but do not break the pipeline.
+  osv: true                   # OSV.dev — free, no auth. Provides aliases,
+                              # references, and a CVSS V3 vector that we
+                              # convert into a base score locally.
+  nvd: false                  # OFF by default — NVD's free-tier rate limit
+                              # (5 RPM) makes scans slow. Re-enable only if
+                              # you set NVD_API_KEY for the higher tier.
+  mitre: true                 # CWE -> ATT&CK static table; no API call.
+  cache_ttl_hours: 168
+  max_cves_to_enrich: 10
+  max_seconds: 30

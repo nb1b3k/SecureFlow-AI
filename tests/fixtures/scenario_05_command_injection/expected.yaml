@@ -1,0 +1,14 @@
+scenario_id: scenario_05_command_injection
+description: subprocess(shell=True) with user input — classic OS command injection.
+labels:
+  - id: cmd_inj_ping
+    type: command_injection
+    file: vulnerable.py
+    line_range: [13, 14]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0
+notes: |
+  Semgrep auto config catches shell=True with f-string interpolation
+  under python.lang.security.audit.dangerous-subprocess.* rules.

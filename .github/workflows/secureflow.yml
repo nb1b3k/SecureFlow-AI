@@ -1,0 +1,153 @@
+# SecureFlow AI — GitHub Actions workflow
+#
+# Runs on every pull request: opened, updated, reopened.
+# Posts a structured PR comment, sets CI status, and uploads SARIF to the
+# repo's Security tab. The bot edits its existing comment on re-pushes
+# (marker: <!-- secureflow-ai:bot-comment -->) instead of spamming.
+#
+# Required secrets:
+#   GEMINI_API_KEY   — Google AI Studio key (https://aistudio.google.com/apikey)
+#   (GITHUB_TOKEN is provided automatically.)
+#
+# Optional secrets:
+#   NVD_API_KEY      — only if you set `enrichment.nvd: true` in .secureflow.yml.
+
+name: SecureFlow AI Security Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# A fast second push cancels the prior in-flight run for the same PR.
+concurrency:
+  group: secureflow-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  security-events: write
+  # codeql-action/upload-sarif needs this to fetch workflow-run metadata
+  # for its telemetry call. Without it the upload still succeeds but logs
+  # "Resource not accessible by integration" warnings.
+  actions: read
+
+jobs:
+  scan:
+    name: secureflow scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Need full history so `HEAD~1...HEAD` produces a meaningful diff
+          # and so gitleaks can scan past commits if desired.
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install SecureFlow + Python scanners
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          # Semgrep is pip-installable. Constrains click<8.2, which pyproject
+          # already pins to keep typer happy.
+          pip install semgrep
+          # Checkov for static IaC / DevOps-config review (Terraform,
+          # Dockerfile, K8s, GH Actions workflows, etc.). No live cloud
+          # access required. ~70 MB of Python deps.
+          pip install checkov
+
+      - name: Install gitleaks
+        run: |
+          GITLEAKS_VERSION=8.30.1
+          curl -sSL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar xz -C /tmp gitleaks
+          sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Install grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sudo sh -s -- -b /usr/local/bin
+          grype version | head -n 5
+
+      # Cache the LLM + enrichment response cache between runs so re-pushes
+      # on the same PR don't re-hit Gemini / OSV. Keyed on the head SHA so
+      # the same commit reuses cache and any new commit gets a fresh start.
+      - name: Cache SecureFlow responses
+        uses: actions/cache@v4
+        with:
+          path: .secureflow_cache
+          key: secureflow-cache-${{ github.event.pull_request.head.sha }}
+          restore-keys: |
+            secureflow-cache-
+
+      - name: Run SecureFlow
+        id: secureflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Used when .secureflow.yml > llm.provider == "groq" or when
+          # "groq" appears in llm.fallback_providers. Falls back to empty
+          # when the secret isn't set; clients surface the missing-key
+          # message via the markdown banner instead of crashing.
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          # Same pattern for OpenRouter — used as a last-resort fallback
+          # in the cross-provider chain when both Gemini and Groq are
+          # exhausted. See .secureflow.yml > llm.fallback_providers.
+          OPENROUTER_AI_API_KEY: ${{ secrets.OPENROUTER_AI_API_KEY }}
+          # DeepSeek is the *paid* tail link in the chain. Only consumed
+          # when the three free providers above are all rate-limited or
+          # exhausted on the same run. Missing secret → chain just stops
+          # one link earlier; clients surface the missing-key message in
+          # the markdown banner instead of crashing.
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        # `scan-pr` writes JSON, Markdown, SARIF, telemetry reports and
+        # posts (or updates) the PR bot comment. The telemetry artifact
+        # (run_telemetry.json) is also rendered to $GITHUB_STEP_SUMMARY so
+        # reviewers see a latency/cost table in the Actions UI without
+        # opening any artifact.
+        # Exit code 1 on FAIL, 0 on PASS/WARN, 2 on terminal error.
+        run: secureflow scan-pr --repo . --output report.json --markdown report.md --sarif report.sarif --telemetry run_telemetry.json
+
+      - name: Upload SARIF to GitHub Code Scanning
+        # Always upload, even if the scan failed — GitHub's Security tab is
+        # the most-visible surface for findings, and we'd rather show
+        # results than swallow them when the scan exits non-zero.
+        #
+        # `continue-on-error: true` because Code Scanning is OPT-IN on
+        # private repos: the upload action errors with
+        #   "Code scanning is not enabled for this repository"
+        # until the owner enables it once in Settings → Security → Code
+        # security and analysis. The SecureFlow scan itself shouldn't fail
+        # the workflow just because Code Scanning is off — the JSON +
+        # Markdown reports already cover the findings surface.
+        if: always() && hashFiles('report.sarif') != ''
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: report.sarif
+          category: secureflow-ai
+
+      - name: Upload JSON/Markdown reports as build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: secureflow-reports
+          path: |
+            report.json
+            report.md
+            report.sarif
+            run_telemetry.json
+          if-no-files-found: ignore
+          retention-days: 14

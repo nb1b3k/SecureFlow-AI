@@ -1,0 +1,23 @@
+scenario_id: scenario_02_missing_authz
+description: |
+  Flask admin endpoint with no authentication or authorization checks.
+  Scanners typically miss this; AI Discovery should flag it.
+labels:
+  - id: missing_authz_list_users
+    type: missing_authorization
+    file: app.py
+    line_range: [13, 17]
+    expected_severity: high
+    expected_decision_contribution: WARN
+  - id: missing_authz_delete_user
+    type: missing_authorization
+    file: app.py
+    line_range: [20, 24]
+    expected_severity: critical
+    expected_decision_contribution: FAIL
+expected_decision: WARN     # or FAIL — depends on AI's confidence rating
+expected_minimum_recall: 0.5
+notes: |
+  This is the canonical "AI catches what scanners miss" demo. The decision
+  agent will WARN unless AI Discovery returns critical+confidence>=0.85,
+  in which case it FAILs.

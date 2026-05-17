@@ -1,0 +1,11 @@
+scenario_id: scenario_18_sha1_pwd
+description: SHA-1 used for password hashing.
+labels:
+  - id: sha1_pwd
+    type: weak_crypto
+    file: vulnerable.py
+    line_range: [10, 11]
+    expected_severity: medium
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 1.0

@@ -1,0 +1,78 @@
+# SecureFlow override config for exercising the patch_agent end-to-end
+# against the local Ollama backend.
+#
+# Used for the patch-agent smoke test:
+#   .venv/Scripts/secureflow.exe scan \
+#       --repo tests/fixtures/scenario_04_sqli_diff \
+#       --config .secureflow.ollama.patch.yml \
+#       --output reports/patch_smoke.json
+#
+# The fixture isn't a git repo; TempWorktree falls back to shutil.copytree
+# and `git apply --no-index`, so this still exercises the real apply +
+# rescan loop.
+
+project:
+  name: secureflow-demo-ollama-patch
+
+llm:
+  provider: ollama
+  model: qwen2.5-coder:3b
+  temperature: 0.1
+  # Generation budget high enough for a small unified diff + explanation.
+  max_tokens: 1024
+  cache: true
+
+scanners:
+  semgrep:
+    enabled: true
+    config: auto
+  gitleaks:
+    enabled: true
+  grype:
+    enabled: true
+  syft:
+    enabled: true
+  bandit:
+    enabled: false
+
+ai_discovery:
+  # Off for this test — semgrep already finds the SQLi; we want exactly one
+  # LLM call (the patch generation) so we can measure it cleanly.
+  enabled: false
+
+policy:
+  fail_on:
+    - critical_secret
+    - critical_cve
+    - high_confidence_injection
+    - confirmed_auth_bypass
+  warn_on:
+    - medium_ai_discovery
+    - low_confidence_high_impact
+    - outdated_dependency
+  minimum_fail_confidence: 0.80
+  minimum_warn_confidence: 0.50
+
+limits:
+  max_changed_files_for_ai: 5
+  # 0 → exploitability passes findings through unchanged (no LLM call).
+  max_findings_to_exploit_check: 0
+  max_tokens_per_pr: 50000
+  max_llm_calls_per_pr: 5
+  max_llm_concurrency: 1
+  max_patch_concurrency: 1
+  # > 0 → patch_agent attempts LLM patch generation + rescan verification.
+  # 3 covers semgrep's three overlapping SQLi rules on scenario_04.
+  max_patches_per_pr: 3
+  on_budget_exceeded: warn_and_skip_ai
+
+reporting:
+  post_pr_comment: false
+  output_json: true
+  output_markdown: true
+  output_sarif: false
+
+enrichment:
+  osv: true
+  nvd: false
+  mitre: true

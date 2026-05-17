@@ -1,0 +1,11 @@
+scenario_id: scenario_13_yaml_unsafe
+description: yaml.load with attacker-controlled bytes — RCE via tag handlers.
+labels:
+  - id: yaml_unsafe_load
+    type: insecure_deserialization
+    file: vulnerable.py
+    line_range: [15, 16]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0

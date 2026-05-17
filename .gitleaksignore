@@ -1,0 +1,21 @@
+# SecureFlow AI — gitleaks allowlist
+#
+# Each line is a gitleaks "fingerprint" identifying a finding we know is
+# intentional (test fixtures, documentation examples). Fingerprints encode
+# (commit:file:rule:line) so they're tied to a specific commit and update
+# whenever those lines change.
+#
+# DO NOT add real secrets here. If a line drifts and a new fingerprint is
+# needed, regenerate by running:
+#   gitleaks detect --report-format json --report-path tmp.json --source .
+# and copy the `Fingerprint` field of any finding you confirm is intentional.
+
+# Unit-test fixtures — example AWS keys used to test the masker.
+579e0875e29dbccebb8ab1bd7ac28c4ae3675519:tests/unit/test_finding_ids.py:generic-api-key:52
+579e0875e29dbccebb8ab1bd7ac28c4ae3675519:tests/unit/test_finding_ids.py:generic-api-key:57
+
+# Unit-test fixtures — example Stripe keys used to test the masker.
+579e0875e29dbccebb8ab1bd7ac28c4ae3675519:tests/unit/test_secret_masker.py:stripe-access-token:16
+579e0875e29dbccebb8ab1bd7ac28c4ae3675519:tests/unit/test_secret_masker.py:stripe-access-token:18
+
+# Plan documentation — illustrative example of insecure code.

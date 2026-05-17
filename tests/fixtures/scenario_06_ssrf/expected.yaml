@@ -1,0 +1,14 @@
+scenario_id: scenario_06_ssrf
+description: Flask endpoint fetches a URL straight from request.args without validation.
+labels:
+  - id: ssrf_fetch
+    type: ssrf
+    file: vulnerable.py
+    line_range: [14, 15]
+    expected_severity: high
+    expected_decision_contribution: FAIL
+expected_decision: FAIL
+expected_minimum_recall: 1.0
+notes: |
+  Semgrep python.requests.security.disabled-cert-validation / .ssrf
+  patterns cover this when user input flows into requests.get.

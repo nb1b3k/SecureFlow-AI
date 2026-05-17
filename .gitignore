@@ -1,0 +1,68 @@
+# SecureFlow AI — gitignore
+
+# ─── secrets ────────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ─── python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+.installed.cfg
+pip-wheel-metadata/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+ENV/
+
+# Tests / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# ─── secureflow runtime artifacts ──────────────────────────────────────────
+.secureflow_cache/
+eval_reports/
+# `reports/` was previously fully ignored. For the public release we want
+# to ship the LATEST eval results so reviewers see real metrics without
+# having to install the toolchain + run the harness themselves. We track
+# only the canonical filenames and ignore everything else (per-iteration
+# JSON snapshots, ad-hoc smoke tests, etc.) so the directory doesn't bloat.
+reports/*
+!reports/eval_scanners_only.md
+!reports/eval_scanners_only.json
+!reports/eval_full.md
+!reports/eval_full.json
+!reports/eval_versions.yaml
+*.sarif
+report.json
+report.md
+
+# ─── editors / OS ──────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ─── Claude Code agent runtime ─────────────────────────────────────────────
+.claude/
+
+# ─── logs ──────────────────────────────────────────────────────────────────
+*.log
+logs/

@@ -1,0 +1,13 @@
+scenario_id: scenario_09_safe_subprocess_fp
+description: |
+  shell=False with a literal argv list is the secure pattern. Some scanners
+  still raise warnings. The exploitability agent should downgrade this so
+  the decision stays PASS or WARN — never FAIL.
+labels: []        # intentional: no real vulnerability to detect
+expected_decision: PASS
+expected_minimum_recall: 1.0
+expected_maximum_fp: 0
+notes: |
+  Demonstrates the FP-reduction story. scanners_only may flag this as a
+  warning, secureflow_full should downgrade it. If decision is anything
+  other than PASS, the exploitability layer didn't do its job.

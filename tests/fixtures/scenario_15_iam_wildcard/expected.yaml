@@ -1,0 +1,15 @@
+scenario_id: scenario_15_iam_wildcard
+description: IAM policy granting Action:* on Resource:* — over-permissioned role.
+labels:
+  - id: iam_wildcard
+    type: missing_authorization
+    file: policy.json
+    line_range: [5, 8]
+    expected_severity: high
+    expected_decision_contribution: WARN
+expected_decision: WARN
+expected_minimum_recall: 0.5
+notes: |
+  Semgrep doesn't typically scan raw JSON policies under `auto`; the AI
+  Discovery agent picks this up via the iam_policy AST signal. Expect
+  TP=0 in scanners_only and TP=1 in secureflow_full once Gemini runs.

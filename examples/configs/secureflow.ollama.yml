@@ -1,0 +1,80 @@
+# SecureFlow override config for the local Ollama backend.
+#
+# Used for end-to-end integration runs against the local daemon:
+#   .venv/Scripts/secureflow.exe eval run \
+#       --config .secureflow.ollama.yml \
+#       --scenarios scenario_02_missing_authz \
+#       --llm-concurrency 1 \
+#       --max-findings-to-exploit 0 \
+#       --max-patches 0 \
+#       --output reports/eval_ollama.md
+#
+# Kept in tree so the repro command is part of the codebase.
+
+project:
+  name: secureflow-demo-ollama
+
+llm:
+  provider: ollama
+  # Must contain ":" so factory.build_llm_client forwards it instead of
+  # falling back to the OllamaClient default.
+  model: qwen2.5-coder:3b
+  temperature: 0.1
+  # Inference on CPU is slow; long responses dominate wall-clock. Keep
+  # the cap modest — AI Discovery typically uses 150-300 output tokens.
+  max_tokens: 768
+  cache: true
+
+scanners:
+  semgrep:
+    enabled: true
+    config: auto
+  gitleaks:
+    enabled: true
+  grype:
+    enabled: true
+  syft:
+    enabled: true
+  bandit:
+    enabled: false
+
+ai_discovery:
+  enabled: true
+  run_on_all_prs: false
+  trigger_on_sensitive_files: true
+
+policy:
+  fail_on:
+    - critical_secret
+    - critical_cve
+    - high_confidence_injection
+    - confirmed_auth_bypass
+  warn_on:
+    - medium_ai_discovery
+    - low_confidence_high_impact
+    - outdated_dependency
+  minimum_fail_confidence: 0.80
+  minimum_warn_confidence: 0.50
+
+limits:
+  # Tight bounds for CPU-only local inference. Bump these once you have
+  # a GPU-accelerated Ollama instance.
+  max_changed_files_for_ai: 5
+  max_findings_to_exploit_check: 0   # Skip exploitability entirely on CPU
+  max_tokens_per_pr: 50000
+  max_llm_calls_per_pr: 10
+  max_llm_concurrency: 1             # One in-flight call (APU RAM is shared)
+  max_patch_concurrency: 1
+  max_patches_per_pr: 0              # No patch generation on CPU
+  on_budget_exceeded: warn_and_skip_ai
+
+reporting:
+  post_pr_comment: false
+  output_json: true
+  output_markdown: true
+  output_sarif: true
+
+enrichment:
+  osv: true
+  nvd: false
+  mitre: true
