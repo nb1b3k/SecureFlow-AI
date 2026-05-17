@@ -326,4 +326,4 @@ All four `scenario_pi_*` fixtures (comment-override, fake-review, role-injection
 
 ## License
 
-MIT. See [`LICENSE`](LICENSE).
+AGPL-3.0. See [`LICENSE`](LICENSE).
