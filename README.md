@@ -12,8 +12,45 @@ The deterministic side handles what scanners are good at: secret detection, SAST
 - 4 LLM reasoning agents (AI Discovery, Exploitability, STRIDE Threat-Model Delta, Patch Generation + Review)
 - 4-link provider failover chain (DeepSeek, Gemini, Groq, OpenRouter) with JSON-repair fallback and tolerant schemas
 - 3 policy profiles (`advisory` / `balanced` / `strict`) and dependency triage (`direct_runtime` / `direct_dev` / `transitive`) for calibrated CI gating
-- 238 unit tests, ruff-clean
+- 233 unit tests, ruff-clean
 - Validated on 40 labeled fixtures across 2 pipeline modes (80 orchestrator runs total) on a standard Ubuntu CI runner with zero degraded stages
+
+### Self-review evidence
+
+The dependency-triage feature was reviewed by SecureFlow AI itself before merge. Pointing the live bot at the PR that introduced the new `manifest_parser` tool, the STRIDE Threat-Modeling Delta agent flagged a real path-traversal weakness *the human reviewer had missed*:
+
+> **Manifest parser reads arbitrary files from repo path** — `secureflow/tools/manifest_parser.py:63` · severity medium · confidence 0.70
+>
+> The `parse_manifests` function reads files from the repository based on user-provided manifest paths. If an attacker can control the `manifest_paths` list (e.g., via a crafted PR), they could cause the parser to read arbitrary files outside the intended manifests, potentially leaking sensitive information.
+>
+> **Required mitigations before merge:**
+> - Validate that resolved paths are within the repository directory (e.g., using `os.path.commonpath` or `Path.relative_to`).
+> - Restrict `manifest_paths` to only files that were actually changed in the PR.
+
+The original code resolved every path naively:
+
+```python
+full = (repo / rel).resolve()
+if not full.exists() or not full.is_file():
+    continue
+sub = _dispatch(full)
+```
+
+The shipped fix applies exactly the mitigation the bot suggested — `Path.relative_to(repo)`:
+
+```python
+repo = Path(repo_path).resolve()
+for rel in manifest_paths:
+    full = (repo / rel).resolve()
+    try:
+        full.relative_to(repo)
+    except ValueError:
+        # Resolved path escapes the repository root — skip.
+        continue
+    # ... + 2 MiB per-manifest size cap as DoS guard
+```
+
+Two unit tests (`test_parse_rejects_path_traversal`, `test_parse_skips_oversized_manifest`) lock the fix in. The bot also flagged a missing file-size cap (DoS) — same patch addressed it. End-to-end this is the strongest evidence that the agentic-review approach catches design-level weaknesses that scanner-only tools miss: the threat-model agent isn't a marketing slide, it's reviewing this repo's own code.
 
 ---
 

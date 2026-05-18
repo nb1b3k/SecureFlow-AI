@@ -97,7 +97,7 @@ Reporting and PR-commenting live in the CLI rather than the graph, so the graph 
 - `semgrep_runner`, `gitleaks_runner`, `grype_runner`, `syft_runner`, `checkov_runner` — subprocess wrappers with JSON parsing, graceful "tool missing" handling, and uniform timeout / error semantics.
 - `git_diff` — list changed files between refs; extract changed line ranges; loud errors on diff failure so CI does not silently scan the wrong tree.
 - `github_api` — comment create-or-update (finds prior bot comment by marker; edits in place rather than spamming).
-- `manifest_parser` — read PR-changed `package.json` / `pyproject.toml` (PEP 621 + Poetry) / `Pipfile` / `requirements*.txt`. Returns the union of direct runtime and direct dev package names so `dependency_agent` can classify each Grype finding. Names are PEP 503 normalized for cross-ecosystem matching.
+- `manifest_parser` — read PR-changed `package.json` / `pyproject.toml` (PEP 621 + Poetry) / `Pipfile` / `requirements*.txt`. Returns the union of direct runtime and direct dev package names so `dependency_agent` can classify each Grype finding. Names are PEP 503 normalized for cross-ecosystem matching. Defense-in-depth (added in response to the threat-model agent's own review on the introducing PR — see README §"Self-review evidence"): paths must resolve inside `repo_path` (via `Path.relative_to`) and individual manifests are capped at 2 MiB to bound parser memory.
 - `rescan` — re-scan dispatcher for patch validation. Re-runs the originating scanner on a temp worktree; matching is intentionally fuzzy (same file + CWE + symbol counts as "still present" even if line / fingerprint shifted).
 
 ### 2.7 LLM stack (`secureflow.llm.*`)
