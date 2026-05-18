@@ -3,23 +3,29 @@
 Inputs: a list of `Finding` (dicts) and the user's `PolicyConfig`.
 Output: a `Decision`.
 
-Rules implemented:
-- FAIL on critical secrets, critical CVEs, confirmed high-confidence injection,
-  AI-discovered critical issues with confidence >= 0.85.
-- WARN on medium-confidence AI findings, outdated dependencies without
-  confirmed exploitability.
-- PASS otherwise.
+Three policy profiles tune how strictly findings translate into a FAIL:
+- `advisory`: never blocks. Every FAIL becomes a WARN so the team can
+  watch the system in shadow mode before enforcement.
+- `balanced` (default): blocks on critical secrets, critical CVEs,
+  high-confidence injection patterns, and AI-discovered critical issues
+  at confidence >= 0.85.
+- `strict`: tightens thresholds. AI high at >= 0.85 can block, AI
+  critical fails at >= 0.75, dependency-high with a fix blocks, and the
+  STRIDE threat-model agent's FAIL recommendations need only >= 0.70.
 
-The engine also computes a transparent 0-100 risk score (plan §18) and
-attaches reasons / required-actions for the report.
+The engine also computes a transparent 0-100 risk score and attaches
+reasons / required-actions for the report.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable
+from typing import Literal
 
 from secureflow.config import PolicyConfig
 from secureflow.schemas.decision import Decision
+
+Profile = Literal["advisory", "balanced", "strict"]
 
 _SEVERITY_BASE = {
     "critical": 40,
@@ -61,6 +67,37 @@ _HIGH_IMPACT_RULE_KEYWORDS = (
 def _is_high_impact(rule_id: str | None, title: str) -> bool:
     text = f"{rule_id or ''}|{title}".lower()
     return any(k in text for k in _HIGH_IMPACT_RULE_KEYWORDS)
+
+
+# Profile-specific thresholds. `balanced` mirrors the engine's historic
+# behavior so existing tests and configs keep their decisions stable.
+_PROFILE_THRESHOLDS: dict[str, dict[str, float | bool]] = {
+    "advisory": {
+        "ai_critical_fail_conf": 0.85,
+        "ai_high_fail_conf": 1.01,            # > 1.0 means "never"
+        "threat_model_fail_conf": 0.80,
+        "sast_high_impact_fail_conf": 0.50,
+        "dep_high_fails_when_fix_available": False,
+    },
+    "balanced": {
+        "ai_critical_fail_conf": 0.85,
+        "ai_high_fail_conf": 1.01,
+        "threat_model_fail_conf": 0.80,
+        "sast_high_impact_fail_conf": 0.50,
+        "dep_high_fails_when_fix_available": False,
+    },
+    "strict": {
+        "ai_critical_fail_conf": 0.75,
+        "ai_high_fail_conf": 0.85,            # high + 0.85+ blocks in strict
+        "threat_model_fail_conf": 0.70,
+        "sast_high_impact_fail_conf": 0.40,
+        "dep_high_fails_when_fix_available": True,
+    },
+}
+
+
+def _thresholds(profile: str) -> dict[str, float | bool]:
+    return _PROFILE_THRESHOLDS.get(profile, _PROFILE_THRESHOLDS["balanced"])
 
 
 def _score_one(finding: dict) -> int:
@@ -105,6 +142,9 @@ def decide(
     contributing_ids: list[str] = []
     status: str = "PASS"
 
+    profile = getattr(policy, "profile", "balanced")
+    th = _thresholds(profile)
+
     fail = False
     warn = False
 
@@ -128,14 +168,47 @@ def decide(
                 contributing_ids.append(fid)
             continue
 
-        # Critical CVE in deps → FAIL.
+        # Critical CVE in deps → FAIL, *except* when the affected package
+        # is a direct dev/test/lint/docs dependency. A critical CVE in a
+        # build-only package (eslint, pytest, mkdocs) doesn't ship with
+        # the application and shouldn't block a production-code PR.
+        # Transitive and runtime-direct critical CVEs continue to FAIL —
+        # reachability is unknown and the safe default is to surface them.
         if source in {"grype", "osv"} and sev == "critical":
+            scope = f.get("dependency_scope") or "unknown"
+            if scope == "direct_dev":
+                warn = True
+                reasons.append(f"Critical CVE in dev dependency: {title}")
+                if fid:
+                    contributing_ids.append(fid)
+                continue
             fail = True
             reasons.append(f"Critical CVE: {title}")
             required.append("Upgrade affected dependency to a fixed version.")
             if fid:
                 contributing_ids.append(fid)
             continue
+
+        # `strict` profile: high-severity direct dep with a fix available → FAIL.
+        # The `recommendation` text on a Grype finding mentions the fix
+        # versions ("Upgrade ... to one of: 4.3.2, 5.0.1.") so we use that
+        # as a cheap "fix available" check without re-parsing structured data.
+        if (
+            th["dep_high_fails_when_fix_available"]
+            and source in {"grype", "osv"}
+            and sev == "high"
+        ):
+            rec = (f.get("recommendation") or "").lower()
+            scope = f.get("dependency_scope") or "unknown"
+            fix_available = "to one of:" in rec or "once one is published" not in rec
+            is_direct = scope.startswith("direct")
+            if fix_available and is_direct:
+                fail = True
+                reasons.append(f"High-severity direct dependency with fix: {title}")
+                required.append("Upgrade affected dependency to a fixed version.")
+                if fid:
+                    contributing_ids.append(fid)
+                continue
 
         # SAST findings on canonical high-impact patterns → FAIL.
         #
@@ -150,7 +223,7 @@ def decide(
         # false positives — over-conservative scanner severity is not.
         if source in {"semgrep", "bandit"} and sev != "info":
             high_impact = _is_high_impact(rule_id, title)
-            if high_impact and conf >= 0.50:
+            if high_impact and conf >= float(th["sast_high_impact_fail_conf"]):
                 fail = True
                 reasons.append(f"High-impact SAST pattern: {title}")
                 required.append("Apply a parameterized / sanitized / authorized pattern.")
@@ -158,15 +231,35 @@ def decide(
                     contributing_ids.append(fid)
                 continue
 
-        # AI-discovered critical + high confidence → FAIL; otherwise WARN.
+        # AI-discovered critical/high → FAIL above the profile threshold;
+        # otherwise WARN. Strict profile lowers `ai_critical_fail_conf` to
+        # 0.75 and adds an `ai_high_fail_conf` of 0.85; balanced/advisory
+        # mirror the historic behavior (critical >= 0.85, high never auto-fails).
         if source == "ai_discovery":
-            if sev == "critical" and conf >= 0.85:
+            ai_crit_th = float(th["ai_critical_fail_conf"])
+            ai_high_th = float(th["ai_high_fail_conf"])
+            if sev == "critical" and conf >= ai_crit_th:
                 fail = True
                 reasons.append(f"AI-discovered critical risk: {title}")
                 required.append("Investigate and remediate AI-identified vulnerability.")
                 if fid:
                     contributing_ids.append(fid)
-            elif sev in {"medium", "high"} and conf >= policy.minimum_warn_confidence:
+            elif sev == "high" and conf >= ai_high_th:
+                fail = True
+                reasons.append(f"AI-discovered high-confidence risk: {title}")
+                required.append("Investigate and remediate AI-identified vulnerability.")
+                if fid:
+                    contributing_ids.append(fid)
+            elif (
+                sev in {"medium", "high", "critical"}
+                and conf >= policy.minimum_warn_confidence
+            ):
+                # `critical` is included here so that an AI critical
+                # finding *below* the fail threshold still surfaces as a
+                # WARN rather than silently passing. Without this, an AI
+                # discovery with severity=critical / confidence=0.78
+                # would slip past both branches and produce a PASS — a
+                # bug observable from outside the engine.
                 warn = True
                 reasons.append(f"AI-discovered risk needs review: {title}")
                 if fid:
@@ -204,10 +297,11 @@ def decide(
         suggested = t.get("suggested_decision", "WARN")
         title = t.get("title") or "design change"
         change = t.get("change_type") or "design change"
+        tm_fail_th = float(th["threat_model_fail_conf"])
         if (
             suggested == "FAIL"
             and sev in {"critical", "high"}
-            and conf >= policy.minimum_fail_confidence
+            and conf >= tm_fail_th
         ):
             fail = True
             reasons.append(f"Threat model FAIL: {title} ({change})")
@@ -218,6 +312,17 @@ def decide(
         ):
             warn = True
             reasons.append(f"Threat model needs review: {title} ({change})")
+
+    # `advisory` profile: never block CI. Findings that would normally
+    # FAIL are reported as WARN with a marker line so the reviewer can
+    # tell which would have blocked under `balanced` or `strict`. The
+    # underlying `reasons` list is kept intact for the report.
+    if profile == "advisory" and fail:
+        reasons.append(
+            "(advisory profile: blocking findings downgraded to warnings)"
+        )
+        warn = True
+        fail = False
 
     if fail:
         status = "FAIL"

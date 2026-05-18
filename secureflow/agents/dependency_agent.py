@@ -14,6 +14,7 @@ from pathlib import PurePosixPath
 from secureflow.schemas.finding import Severity
 from secureflow.schemas.ids import compute_finding_id
 from secureflow.tools.grype_runner import run_grype
+from secureflow.tools.manifest_parser import DirectDeps, normalize, parse_manifests
 from secureflow.utils.logging import get_logger
 from secureflow.utils.subprocess_utils import ToolNotFoundError
 
@@ -106,6 +107,19 @@ def dependency_scan(state: dict) -> dict:
         manifest_set = {str(PurePosixPath(m.replace("\\", "/"))) for m in manifests}
         matches = [m for m in matches if _match_in_manifests(m, manifest_set)]
 
+    # Build the direct-dependency set from the PR's changed manifests. If
+    # parsing yields nothing (no recognized manifests, parse failures), all
+    # findings stay at `dependency_scope=unknown` and the policy engine
+    # treats them as before — no regression.
+    direct = parse_manifests(repo_path, manifests)
+    log.info(
+        "direct dependency classification ready",
+        extra={
+            "direct_runtime": len(direct.runtime),
+            "direct_dev": len(direct.dev),
+        },
+    )
+
     findings: list[dict] = []
     for m in matches:
         vuln = m.get("vulnerability", {}) or {}
@@ -131,6 +145,8 @@ def dependency_scan(state: dict) -> dict:
             rec_parts.append(f"to one of: {', '.join(fix_versions)}.")
         else:
             rec_parts.append("to a fixed version once one is published.")
+
+        scope = _classify_scope(pkg_name, direct)
 
         findings.append({
             "id": finding_id,
@@ -161,6 +177,7 @@ def dependency_scan(state: dict) -> dict:
             "patch_status": "none",
             "patch_verification_notes": None,
             "prompt_version": None,
+            "dependency_scope": scope,
         })
 
     log.info(
@@ -168,6 +185,22 @@ def dependency_scan(state: dict) -> dict:
         extra={"findings": len(findings), "manifests": len(manifests)},
     )
     return {"dependency_findings": findings}
+
+
+def _classify_scope(pkg_name: str, direct: DirectDeps) -> str:
+    """Tag the finding's package as direct_runtime / direct_dev / transitive / unknown.
+
+    When no manifests were parseable, every finding stays `unknown` and the
+    policy engine treats the scan exactly as it did before triage shipped.
+    """
+    if direct.is_empty:
+        return "unknown"
+    norm = normalize(pkg_name)
+    if norm in direct.runtime:
+        return "direct_runtime"
+    if norm in direct.dev:
+        return "direct_dev"
+    return "transitive"
 
 
 def _match_in_manifests(match: dict, manifest_paths: set[str]) -> bool:

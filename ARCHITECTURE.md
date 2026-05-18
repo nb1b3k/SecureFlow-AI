@@ -81,7 +81,7 @@ Reporting and PR-commenting live in the CLI rather than the graph, so the graph 
 | `context_agent` | Build `PRContext` from the diff: changed files, language map, sensitive-file flag via AST signals + path heuristics. | repo path, git refs, config | `PRContext` |
 | `secrets_agent` | Run Gitleaks; normalize findings; map CWE-798, ATT&CK T1552.001. Graceful "not installed" handling. | repo path | `list[Finding]` |
 | `sast_agent` | Run Semgrep; normalize; preserve rule ID and metadata. | repo path, changed files | `list[Finding]` |
-| `dependency_agent` | Run Grype; PR-scope guarded (skips when no manifests changed). | repo path | `list[Finding]` |
+| `dependency_agent` | Run Grype; PR-scope guarded (skips when no manifests changed). Each finding is tagged with `dependency_scope` (`direct_runtime` / `direct_dev` / `transitive` / `unknown`) from parsing the changed manifests, which the policy engine uses to triage noise. | repo path, changed manifests | `list[Finding]` |
 | `iac_agent` | Run Checkov on Terraform / Dockerfile / Compose / Kubernetes / Helm / CloudFormation / Serverless / GitHub Actions workflows / committed IAM and bucket policy JSON. PR-scope guarded. Known-dangerous CKV check IDs get severity-bumped to `high`. | repo path, changed files | `list[Finding]` |
 | `ai_discovery_agent` | LLM-driven vulnerability discovery via the chain. Skips cleanly when LLM unavailable, no sensitive signals, or empty diff. Schema-validated; `AIDiscoveryItem` is tolerant of LLM sloppiness. | `PRContext`, diff | `list[Finding]` |
 | `normalizer` | Merge five scanner streams; validate; dedup by stable ID and by co-location; sort deterministically. Scopes findings to PR-changed files. Applies a deterministic confidence floor on clearly-tainted SAST findings (regardless of LLM availability). | raw finding dicts, `changed_files`, file system | `list[Finding]` |
@@ -97,6 +97,7 @@ Reporting and PR-commenting live in the CLI rather than the graph, so the graph 
 - `semgrep_runner`, `gitleaks_runner`, `grype_runner`, `syft_runner`, `checkov_runner` — subprocess wrappers with JSON parsing, graceful "tool missing" handling, and uniform timeout / error semantics.
 - `git_diff` — list changed files between refs; extract changed line ranges; loud errors on diff failure so CI does not silently scan the wrong tree.
 - `github_api` — comment create-or-update (finds prior bot comment by marker; edits in place rather than spamming).
+- `manifest_parser` — read PR-changed `package.json` / `pyproject.toml` (PEP 621 + Poetry) / `Pipfile` / `requirements*.txt`. Returns the union of direct runtime and direct dev package names so `dependency_agent` can classify each Grype finding. Names are PEP 503 normalized for cross-ecosystem matching.
 - `rescan` — re-scan dispatcher for patch validation. Re-runs the originating scanner on a temp worktree; matching is intentionally fuzzy (same file + CWE + symbol counts as "still present" even if line / fingerprint shifted).
 
 ### 2.7 LLM stack (`secureflow.llm.*`)
@@ -118,8 +119,8 @@ Five concrete backends ship: DeepSeek (paid, primary), Gemini, Groq, OpenRouter 
 - `telemetry` — projects orchestrator state into a compact `run_telemetry.json`: per-node latency, LLM tokens and call count, scanner skip / error reasons, prompt versions in use, decision summary. Also renders to `$GITHUB_STEP_SUMMARY`.
 
 ### 2.9 Policy (`secureflow.policy.*`)
-- `policy_engine` — pure deterministic; takes findings + threat-model findings + policy config and produces a `Decision` with rationale and risk score.
-- `default_policy` — ships the default rules: FAIL on critical secret, critical CVE, or high-confidence injection; medium severities WARN; nothing else blocks. Threat-model findings can FAIL only when severity is high or critical AND confidence is above the configured fail threshold AND the LLM's `suggested_decision` is `FAIL`.
+- `policy_engine` — pure deterministic; takes findings + threat-model findings + policy config and produces a `Decision` with rationale and risk score. Three profiles tune strictness: `advisory` (never blocks; FAIL→WARN), `balanced` (default), and `strict` (lower thresholds for AI / threat-model / direct-high-dep findings). Profile-specific thresholds live in `_PROFILE_THRESHOLDS` at the top of the module.
+- `default_policy` — ships the default rules: FAIL on critical secret, critical CVE, or high-confidence injection; medium severities WARN; nothing else blocks. Critical CVEs whose `dependency_scope == direct_dev` downgrade to WARN (build-only packages don't ship with the application). Threat-model findings can FAIL only when severity is high or critical AND confidence is above the configured fail threshold AND the LLM's `suggested_decision` is `FAIL`.
 
 ### 2.10 Utils (`secureflow.utils.*`)
 - `logging` — structured logs (JSON on GitHub Actions, pretty on CLI); never logs secret values.

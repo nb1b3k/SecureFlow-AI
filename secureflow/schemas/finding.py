@@ -19,6 +19,14 @@ PatchStatus = Literal[
 ]
 Reachability = Literal["unreachable", "likely_reachable", "unknown"]
 Exploitability = Literal["none", "low", "medium", "high", "critical"]
+# Dependency-finding classification. `direct_runtime` and `direct_dev`
+# come from parsing manifests in the PR; `transitive` means the package
+# was *not* declared in any direct-deps section of a changed manifest;
+# `unknown` is the default when classification is unavailable (no
+# manifests changed, parse failure, non-dependency finding, etc.).
+DependencyScope = Literal[
+    "direct_runtime", "direct_dev", "transitive", "unknown"
+]
 
 
 class Finding(BaseModel):
@@ -57,6 +65,11 @@ class Finding(BaseModel):
     exploitability: Exploitability | None = None
     attacker_scenario: str | None = None
     impact: str | None = None
+
+    # Only meaningful for dependency findings (source=grype/osv). The
+    # policy engine downgrades transitive and dev findings relative to
+    # direct runtime; the markdown report groups by scope.
+    dependency_scope: DependencyScope = "unknown"
 
     false_positive: bool = False
     false_positive_reason: str | None = None

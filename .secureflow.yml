@@ -112,6 +112,14 @@ reachability:
   enabled_languages: [python, javascript, typescript, go]
 
 policy:
+  # advisory | balanced | strict
+  #   advisory: never blocks CI (every FAIL becomes WARN) — for shadow-mode rollout.
+  #   balanced: default. Blocks critical secrets / critical CVEs in runtime+transitive
+  #             deps / high-confidence injection / AI critical >= 0.85. Critical CVEs
+  #             in dev-only deps downgrade to WARN.
+  #   strict:   adds AI-high >= 0.85, AI-critical >= 0.75, threat-model FAIL >= 0.70,
+  #             and high-severity direct deps with a fix available.
+  profile: balanced
   fail_on:
     - critical_secret
     - critical_cve

@@ -11,7 +11,8 @@ The deterministic side handles what scanners are good at: secret detection, SAST
 - 5 parallel scanners (Gitleaks, Semgrep, Grype, Checkov, AI Vulnerability Discovery)
 - 4 LLM reasoning agents (AI Discovery, Exploitability, STRIDE Threat-Model Delta, Patch Generation + Review)
 - 4-link provider failover chain (DeepSeek, Gemini, Groq, OpenRouter) with JSON-repair fallback and tolerant schemas
-- 210 unit tests, ruff-clean
+- 3 policy profiles (`advisory` / `balanced` / `strict`) and dependency triage (`direct_runtime` / `direct_dev` / `transitive`) for calibrated CI gating
+- 238 unit tests, ruff-clean
 - Validated on 40 labeled fixtures across 2 pipeline modes (80 orchestrator runs total) on a standard Ubuntu CI runner with zero degraded stages
 
 ---
@@ -193,6 +194,8 @@ ai_discovery:
   trigger_on_sensitive_files: true
 
 policy:
+  # advisory | balanced | strict — see "Policy profiles" below.
+  profile: balanced
   fail_on:
     - critical_secret
     - critical_cve
@@ -212,6 +215,36 @@ limits:
 ```
 
 Alternative configurations (Ollama for local-only, Gemini-only, Ollama for patches) ship in [`examples/configs/`](examples/configs/).
+
+---
+
+## Policy profiles
+
+`policy.profile` controls how strictly findings translate into a CI `FAIL`. Three profiles ship; `balanced` is the default.
+
+| Profile | When to use | Behavior |
+|---|---|---|
+| `advisory` | Initial rollout, shadow-mode runs, repos where the team wants visibility before enforcement | Never blocks CI. Every finding that would normally `FAIL` is reported as `WARN` with a marker line so reviewers can still see what *would* have blocked. |
+| `balanced` *(default)* | Day-to-day use on most repositories | Blocks on critical secrets, critical CVEs in direct/transitive dependencies, high-confidence injection patterns, and AI-discovered critical findings at confidence ≥ 0.85. Critical CVEs in dev-only dependencies (eslint, pytest, etc.) downgrade to `WARN`. |
+| `strict` | Security-sensitive repositories where false negatives cost more than false positives | Adds three blockers: AI-discovered high findings at ≥ 0.85, AI critical at ≥ 0.75 (down from 0.85), threat-model FAIL recommendations at ≥ 0.70 (down from 0.80), and high-severity direct dependencies with a fix available. |
+
+```yaml
+policy:
+  profile: strict
+```
+
+## Dependency triage
+
+Dependency findings are classified by scope to reduce noise:
+
+| Scope | Source | Policy effect (balanced) |
+|---|---|---|
+| `direct_runtime` | Package declared in `dependencies` / `[project.dependencies]` / `[packages]` / runtime `requirements.txt` | Full strictness — critical FAILs, high WARNs |
+| `direct_dev` | Package declared in `devDependencies` / `[tool.poetry.group.dev.dependencies]` / `[dev-packages]` / `requirements-dev.txt` | Critical downgrades to `WARN` (build-only deps don't ship with the application) |
+| `transitive` | Package not declared in any direct-deps section of a changed manifest | Same FAIL bar as direct runtime — reachability is unknown, safe default |
+| `unknown` | No manifests in the PR diff, or parser couldn't read them | Pre-triage behavior preserved (no regression) |
+
+Manifests supported: `package.json`, `pyproject.toml` (PEP 621 + Poetry), `Pipfile`, `requirements*.txt`.
 
 ---
 

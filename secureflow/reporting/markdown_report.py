@@ -225,9 +225,18 @@ def _render_finding(f: dict) -> list[str]:
     cvss = f.get("cvss_score")
     cvss_vec = f.get("cvss_vector") or ""
     refs = [r for r in (f.get("references") or []) if isinstance(r, str)]
+    src = f.get("source")
+    src_label = str(src) if src else ""
+    # Tag dependency findings with their scope (direct_runtime / direct_dev /
+    # transitive / unknown) so the reviewer can tell at a glance whether a
+    # CVE ships with the app, is a build-only dep, or comes in transitively.
+    if src in {"grype", "osv"}:
+        scope = f.get("dependency_scope")
+        if scope and scope != "unknown":
+            src_label = f"{src_label} ({scope})"
     bits = [
         f"### {title}",
-        f"- **Severity:** {sev}  ·  **Confidence:** {conf:.2f}  ·  **Source:** {f.get('source')}",
+        f"- **Severity:** {sev}  ·  **Confidence:** {conf:.2f}  ·  **Source:** {src_label}",
         f"- **Location:** `{loc}`",
     ]
     meta = []

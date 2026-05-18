@@ -145,6 +145,19 @@ class ReachabilityConfig(BaseModel):
 
 class PolicyConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
+    # Policy profile governs how strictly the engine blocks CI.
+    #
+    # - `advisory`: never block. Every FAIL is reported as WARN. Useful
+    #   for initial rollout, "shadow mode" runs, or repositories where the
+    #   team wants visibility before enforcement.
+    # - `balanced` (default): current behavior. Blocks on critical
+    #   secrets, critical CVEs, high-confidence injection patterns, and
+    #   AI-discovered critical findings with confidence >= 0.85.
+    # - `strict`: tighter thresholds for security-sensitive repos. AI-
+    #   discovered high findings can block at confidence >= 0.85, AI
+    #   critical fails at >= 0.75, dependency-high CVEs with a fix block,
+    #   and threat-model FAILs only need confidence >= 0.70.
+    profile: Literal["advisory", "balanced", "strict"] = "balanced"
     fail_on: list[str] = Field(
         default_factory=lambda: [
             "critical_secret",
@@ -195,7 +208,11 @@ class EnrichmentConfig(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
     osv: bool = True               # OSV API for CVE/GHSA details (fast, no rate limit)
-    nvd: bool = True               # NVD API for CVSS + descriptions
+    # NVD off by default — free-tier rate limit is 5 req / 30s without an
+    # API key, which serializes CVE enrichment and adds 10-30s of latency
+    # to a scan with even a few CVEs. The shipped `.secureflow.yml` mirrors
+    # this default. Set to `true` only when `NVD_API_KEY` is configured.
+    nvd: bool = False              # NVD API for CVSS + descriptions
     mitre: bool = True             # CWE → ATT&CK static expansion (no network)
     cache_ttl_hours: int = 168     # 7 days
     # NVD without an API key rate-limits to ~5 req / 30s. Cap CVE enrichment
