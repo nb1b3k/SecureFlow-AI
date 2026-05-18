@@ -53,7 +53,7 @@
         "unmatched_label_ids": [
           "stripe_key"
         ],
-        "latency_ms": 5610,
+        "latency_ms": 5165,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -81,10 +81,10 @@
         "unmatched_label_ids": [
           "stripe_key"
         ],
-        "latency_ms": 9692,
-        "tokens_in": 8593,
-        "tokens_out": 1897,
-        "llm_calls": 0,
+        "latency_ms": 32258,
+        "tokens_in": 15609,
+        "tokens_out": 2188,
+        "llm_calls": 11,
         "patches_attempted": 2,
         "patches_verified": 1,
         "scanner_errors": {
@@ -146,7 +146,7 @@
           "missing_authz_list_users",
           "missing_authz_delete_user"
         ],
-        "latency_ms": 4444,
+        "latency_ms": 4487,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -173,10 +173,10 @@
           "missing_authz_delete_user"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4441,
-        "tokens_in": 6039,
-        "tokens_out": 1462,
-        "llm_calls": 0,
+        "latency_ms": 14955,
+        "tokens_in": 6154,
+        "tokens_out": 1431,
+        "llm_calls": 4,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -232,7 +232,7 @@
           "requests_2200_cves"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 42200,
+        "latency_ms": 45165,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -258,10 +258,10 @@
           "requests_2200_cves"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 5611,
-        "tokens_in": 2344,
-        "tokens_out": 9,
-        "llm_calls": 0,
+        "latency_ms": 11736,
+        "tokens_in": 11014,
+        "tokens_out": 337,
+        "llm_calls": 6,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -309,7 +309,7 @@
           "sqli_get_user"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4303,
+        "latency_ms": 4331,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -335,12 +335,12 @@
           "sqli_get_user"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 15312,
-        "tokens_in": 7327,
-        "tokens_out": 1327,
-        "llm_calls": 0,
+        "latency_ms": 636489,
+        "tokens_in": 19638,
+        "tokens_out": 1750,
+        "llm_calls": 13,
         "patches_attempted": 3,
-        "patches_verified": 0,
+        "patches_verified": 1,
         "scanner_errors": {
           "grype": "skipped: no dependency manifests changed",
           "checkov": "skipped: no IaC files changed"
@@ -386,7 +386,7 @@
           "cmd_inj_ping"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4433,
+        "latency_ms": 4270,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -412,10 +412,10 @@
           "cmd_inj_ping"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8596,
-        "tokens_in": 5400,
-        "tokens_out": 970,
-        "llm_calls": 0,
+        "latency_ms": 19418,
+        "tokens_in": 8977,
+        "tokens_out": 1148,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -463,7 +463,7 @@
           "ssrf_fetch"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4540,
+        "latency_ms": 4198,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -489,10 +489,10 @@
           "ssrf_fetch"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 10827,
-        "tokens_in": 6361,
-        "tokens_out": 1321,
-        "llm_calls": 0,
+        "latency_ms": 23114,
+        "tokens_in": 13493,
+        "tokens_out": 1680,
+        "llm_calls": 9,
         "patches_attempted": 2,
         "patches_verified": 0,
         "scanner_errors": {
@@ -540,7 +540,7 @@
           "md5_pwd_hash"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4318,
+        "latency_ms": 4303,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -566,10 +566,10 @@
           "md5_pwd_hash"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4493,
-        "tokens_in": 4555,
-        "tokens_out": 768,
-        "llm_calls": 0,
+        "latency_ms": 11421,
+        "tokens_in": 4680,
+        "tokens_out": 727,
+        "llm_calls": 3,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -617,7 +617,7 @@
         "unmatched_label_ids": [
           "path_traversal_download"
         ],
-        "latency_ms": 4660,
+        "latency_ms": 4252,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -643,10 +643,10 @@
           "path_traversal_download"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 6569,
-        "tokens_in": 4646,
-        "tokens_out": 942,
-        "llm_calls": 0,
+        "latency_ms": 11141,
+        "tokens_in": 4774,
+        "tokens_out": 873,
+        "llm_calls": 3,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -678,7 +678,7 @@
         "false_negatives": 0,
         "matched_label_ids": [],
         "unmatched_label_ids": [],
-        "latency_ms": 5720,
+        "latency_ms": 4243,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -702,10 +702,10 @@
         "false_negatives": 0,
         "matched_label_ids": [],
         "unmatched_label_ids": [],
-        "latency_ms": 4541,
-        "tokens_in": 2413,
+        "latency_ms": 5473,
+        "tokens_in": 2415,
         "tokens_out": 9,
-        "llm_calls": 0,
+        "llm_calls": 1,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -754,7 +754,7 @@
           "pickle_loads"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4400,
+        "latency_ms": 4240,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -780,10 +780,10 @@
           "pickle_loads"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8817,
-        "tokens_in": 5409,
-        "tokens_out": 924,
-        "llm_calls": 0,
+        "latency_ms": 17642,
+        "tokens_in": 8973,
+        "tokens_out": 1035,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -831,7 +831,7 @@
           "xss_render"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4333,
+        "latency_ms": 4473,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -857,10 +857,10 @@
           "xss_render"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 15072,
-        "tokens_in": 7143,
-        "tokens_out": 1416,
-        "llm_calls": 0,
+        "latency_ms": 33131,
+        "tokens_in": 17585,
+        "tokens_out": 1974,
+        "llm_calls": 12,
         "patches_attempted": 3,
         "patches_verified": 0,
         "scanner_errors": {
@@ -908,7 +908,7 @@
           "open_redirect_go"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 5951,
+        "latency_ms": 4208,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -934,10 +934,10 @@
           "open_redirect_go"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8881,
-        "tokens_in": 5270,
-        "tokens_out": 1013,
-        "llm_calls": 0,
+        "latency_ms": 18860,
+        "tokens_in": 8876,
+        "tokens_out": 1167,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -985,7 +985,7 @@
           "yaml_unsafe_load"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4425,
+        "latency_ms": 4155,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1011,10 +1011,10 @@
           "yaml_unsafe_load"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8477,
-        "tokens_in": 5453,
-        "tokens_out": 1055,
-        "llm_calls": 0,
+        "latency_ms": 18513,
+        "tokens_in": 9102,
+        "tokens_out": 1297,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -1062,7 +1062,7 @@
         "unmatched_label_ids": [
           "pay_before_ship"
         ],
-        "latency_ms": 4432,
+        "latency_ms": 4208,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1088,10 +1088,10 @@
         "unmatched_label_ids": [
           "pay_before_ship"
         ],
-        "latency_ms": 4533,
-        "tokens_in": 4851,
-        "tokens_out": 812,
-        "llm_calls": 0,
+        "latency_ms": 608518,
+        "tokens_in": 4964,
+        "tokens_out": 428,
+        "llm_calls": 3,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -1139,7 +1139,7 @@
         "unmatched_label_ids": [
           "iam_wildcard"
         ],
-        "latency_ms": 10527,
+        "latency_ms": 9249,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1164,10 +1164,10 @@
         "unmatched_label_ids": [
           "iam_wildcard"
         ],
-        "latency_ms": 6288,
-        "tokens_in": 4381,
-        "tokens_out": 766,
-        "llm_calls": 0,
+        "latency_ms": 14108,
+        "tokens_in": 4511,
+        "tokens_out": 745,
+        "llm_calls": 3,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -1214,7 +1214,7 @@
         "unmatched_label_ids": [
           "jwt_no_verify"
         ],
-        "latency_ms": 4749,
+        "latency_ms": 4221,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1240,10 +1240,10 @@
         "unmatched_label_ids": [
           "jwt_no_verify"
         ],
-        "latency_ms": 8518,
-        "tokens_in": 5445,
-        "tokens_out": 994,
-        "llm_calls": 0,
+        "latency_ms": 18951,
+        "tokens_in": 9015,
+        "tokens_out": 1118,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 1,
         "scanner_errors": {
@@ -1291,7 +1291,7 @@
           "rsa_private_key"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4274,
+        "latency_ms": 4063,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1317,10 +1317,10 @@
           "rsa_private_key"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8753,
-        "tokens_in": 5197,
-        "tokens_out": 739,
-        "llm_calls": 0,
+        "latency_ms": 19217,
+        "tokens_in": 8803,
+        "tokens_out": 858,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 1,
         "scanner_errors": {
@@ -1368,7 +1368,7 @@
           "sha1_pwd"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4387,
+        "latency_ms": 4321,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1383,8 +1383,8 @@
       },
       "secureflow_full": {
         "mode": "secureflow_full",
-        "decision": "WARN",
-        "decision_correct": true,
+        "decision": "FAIL",
+        "decision_correct": false,
         "risk_score": 40,
         "total_findings": 2,
         "true_positives": 1,
@@ -1394,10 +1394,10 @@
           "sha1_pwd"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4427,
-        "tokens_in": 5285,
-        "tokens_out": 677,
-        "llm_calls": 0,
+        "latency_ms": 14827,
+        "tokens_in": 5410,
+        "tokens_out": 950,
+        "llm_calls": 4,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -1445,7 +1445,7 @@
         "unmatched_label_ids": [
           "verify_false"
         ],
-        "latency_ms": 4480,
+        "latency_ms": 4216,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1471,10 +1471,10 @@
         "unmatched_label_ids": [
           "verify_false"
         ],
-        "latency_ms": 4554,
-        "tokens_in": 4484,
-        "tokens_out": 764,
-        "llm_calls": 0,
+        "latency_ms": 11263,
+        "tokens_in": 4609,
+        "tokens_out": 830,
+        "llm_calls": 3,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -1522,7 +1522,7 @@
         "unmatched_label_ids": [
           "xxe_lxml"
         ],
-        "latency_ms": 4475,
+        "latency_ms": 4227,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1548,10 +1548,10 @@
         "unmatched_label_ids": [
           "xxe_lxml"
         ],
-        "latency_ms": 4704,
-        "tokens_in": 4581,
-        "tokens_out": 841,
-        "llm_calls": 0,
+        "latency_ms": 12431,
+        "tokens_in": 4704,
+        "tokens_out": 806,
+        "llm_calls": 3,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -1656,7 +1656,7 @@
           "sqli_concat",
           "weak_md5"
         ],
-        "latency_ms": 7793,
+        "latency_ms": 7819,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1685,12 +1685,12 @@
           "stripe_secret",
           "weak_md5"
         ],
-        "latency_ms": 14634,
-        "tokens_in": 15731,
-        "tokens_out": 4579,
-        "llm_calls": 0,
+        "latency_ms": 61900,
+        "tokens_in": 33477,
+        "tokens_out": 5281,
+        "llm_calls": 23,
         "patches_attempted": 5,
-        "patches_verified": 2,
+        "patches_verified": 1,
         "scanner_errors": {}
       },
       "notes": []
@@ -1717,7 +1717,7 @@
         "false_negatives": 0,
         "matched_label_ids": [],
         "unmatched_label_ids": [],
-        "latency_ms": 4313,
+        "latency_ms": 4579,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1741,10 +1741,10 @@
         "false_negatives": 0,
         "matched_label_ids": [],
         "unmatched_label_ids": [],
-        "latency_ms": 4376,
-        "tokens_in": 2307,
+        "latency_ms": 5989,
+        "tokens_in": 2309,
         "tokens_out": 9,
-        "llm_calls": 0,
+        "llm_calls": 1,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -1793,7 +1793,7 @@
           "container_root_user"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 7548,
+        "latency_ms": 7659,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1817,10 +1817,10 @@
           "container_root_user"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 11650,
-        "tokens_in": 6539,
-        "tokens_out": 1453,
-        "llm_calls": 0,
+        "latency_ms": 34442,
+        "tokens_in": 17514,
+        "tokens_out": 2192,
+        "llm_calls": 11,
         "patches_attempted": 3,
         "patches_verified": 1,
         "scanner_errors": {
@@ -1867,7 +1867,7 @@
         "unmatched_label_ids": [
           "gha_write_all"
         ],
-        "latency_ms": 4282,
+        "latency_ms": 4431,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1882,8 +1882,8 @@
       },
       "secureflow_full": {
         "mode": "secureflow_full",
-        "decision": "WARN",
-        "decision_correct": true,
+        "decision": "PASS",
+        "decision_correct": false,
         "risk_score": 0,
         "total_findings": 0,
         "true_positives": 0,
@@ -1893,10 +1893,10 @@
         "unmatched_label_ids": [
           "gha_write_all"
         ],
-        "latency_ms": 4420,
-        "tokens_in": 2356,
-        "tokens_out": 389,
-        "llm_calls": 0,
+        "latency_ms": 5948,
+        "tokens_in": 2358,
+        "tokens_out": 9,
+        "llm_calls": 1,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -1960,7 +1960,7 @@
         "unmatched_label_ids": [
           "rdp_open_to_world"
         ],
-        "latency_ms": 6096,
+        "latency_ms": 6282,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -1987,10 +1987,10 @@
         "unmatched_label_ids": [
           "rdp_open_to_world"
         ],
-        "latency_ms": 6257,
-        "tokens_in": 3763,
-        "tokens_out": 614,
-        "llm_calls": 0,
+        "latency_ms": 16531,
+        "tokens_in": 7503,
+        "tokens_out": 922,
+        "llm_calls": 4,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2053,7 +2053,7 @@
         "unmatched_label_ids": [
           "public_s3"
         ],
-        "latency_ms": 6433,
+        "latency_ms": 6293,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2070,9 +2070,9 @@
         "decision": "FAIL",
         "decision_correct": false,
         "risk_score": 100,
-        "total_findings": 7,
+        "total_findings": 8,
         "true_positives": 1,
-        "false_positives": 6,
+        "false_positives": 7,
         "false_negatives": 1,
         "matched_label_ids": [
           "wildcard_iam"
@@ -2080,10 +2080,10 @@
         "unmatched_label_ids": [
           "public_s3"
         ],
-        "latency_ms": 6629,
-        "tokens_in": 8161,
-        "tokens_out": 1859,
-        "llm_calls": 0,
+        "latency_ms": 36003,
+        "tokens_in": 16455,
+        "tokens_out": 2997,
+        "llm_calls": 11,
         "patches_attempted": 2,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2130,7 +2130,7 @@
         "unmatched_label_ids": [
           "sqli_express_get_user"
         ],
-        "latency_ms": 4385,
+        "latency_ms": 4347,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2156,10 +2156,10 @@
           "sqli_express_get_user"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8956,
-        "tokens_in": 5720,
-        "tokens_out": 1208,
-        "llm_calls": 0,
+        "latency_ms": 19285,
+        "tokens_in": 9306,
+        "tokens_out": 1117,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 1,
         "scanner_errors": {
@@ -2207,7 +2207,7 @@
           "sqli_with_injection_comments"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4435,
+        "latency_ms": 4237,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2224,7 +2224,7 @@
         "mode": "secureflow_full",
         "decision": "FAIL",
         "decision_correct": true,
-        "risk_score": 100,
+        "risk_score": 97,
         "total_findings": 4,
         "true_positives": 1,
         "false_positives": 3,
@@ -2233,12 +2233,12 @@
           "sqli_with_injection_comments"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 15626,
-        "tokens_in": 7741,
-        "tokens_out": 1640,
-        "llm_calls": 0,
+        "latency_ms": 38422,
+        "tokens_in": 18304,
+        "tokens_out": 2081,
+        "llm_calls": 12,
         "patches_attempted": 3,
-        "patches_verified": 1,
+        "patches_verified": 0,
         "scanner_errors": {
           "grype": "skipped: no dependency manifests changed",
           "checkov": "skipped: no IaC files changed"
@@ -2284,7 +2284,7 @@
           "cmd_injection_with_fake_review"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4492,
+        "latency_ms": 4524,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2310,10 +2310,10 @@
           "cmd_injection_with_fake_review"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8908,
-        "tokens_in": 5781,
-        "tokens_out": 1509,
-        "llm_calls": 0,
+        "latency_ms": 19700,
+        "tokens_in": 9373,
+        "tokens_out": 1660,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2361,7 +2361,7 @@
           "path_traversal_with_role_injection"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4372,
+        "latency_ms": 4285,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2387,10 +2387,10 @@
           "path_traversal_with_role_injection"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 26750,
-        "tokens_in": 7074,
-        "tokens_out": 1728,
-        "llm_calls": 0,
+        "latency_ms": 26209,
+        "tokens_in": 10827,
+        "tokens_out": 2133,
+        "llm_calls": 7,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2438,7 +2438,7 @@
           "xss_with_fake_runtime_claim"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4586,
+        "latency_ms": 4299,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2464,10 +2464,10 @@
           "xss_with_fake_runtime_claim"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8763,
-        "tokens_in": 5690,
-        "tokens_out": 1212,
-        "llm_calls": 0,
+        "latency_ms": 23398,
+        "tokens_in": 9283,
+        "tokens_out": 1443,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2499,7 +2499,7 @@
         "false_negatives": 0,
         "matched_label_ids": [],
         "unmatched_label_ids": [],
-        "latency_ms": 4506,
+        "latency_ms": 4940,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2523,10 +2523,10 @@
         "false_negatives": 0,
         "matched_label_ids": [],
         "unmatched_label_ids": [],
-        "latency_ms": 4371,
-        "tokens_in": 2494,
+        "latency_ms": 5575,
+        "tokens_in": 2496,
         "tokens_out": 9,
-        "llm_calls": 0,
+        "llm_calls": 1,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2575,7 +2575,7 @@
         "unmatched_label_ids": [
           "admin_route_no_authz"
         ],
-        "latency_ms": 4299,
+        "latency_ms": 4479,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2592,19 +2592,19 @@
         "mode": "secureflow_full",
         "decision": "FAIL",
         "decision_correct": false,
-        "risk_score": 70,
-        "total_findings": 2,
+        "risk_score": 75,
+        "total_findings": 3,
         "true_positives": 1,
-        "false_positives": 1,
+        "false_positives": 2,
         "false_negatives": 0,
         "matched_label_ids": [
           "admin_route_no_authz"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4605,
-        "tokens_in": 6512,
-        "tokens_out": 1569,
-        "llm_calls": 0,
+        "latency_ms": 22668,
+        "tokens_in": 6630,
+        "tokens_out": 1796,
+        "llm_calls": 4,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2652,7 +2652,7 @@
         "unmatched_label_ids": [
           "path_traversal"
         ],
-        "latency_ms": 4411,
+        "latency_ms": 4463,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2678,10 +2678,10 @@
           "path_traversal"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4507,
-        "tokens_in": 9082,
-        "tokens_out": 2513,
-        "llm_calls": 0,
+        "latency_ms": 37432,
+        "tokens_in": 9206,
+        "tokens_out": 2645,
+        "llm_calls": 7,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2729,7 +2729,7 @@
           "csharp_sqli_sqlcommand_concat"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 5470,
+        "latency_ms": 4458,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2755,10 +2755,10 @@
           "csharp_sqli_sqlcommand_concat"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8584,
-        "tokens_in": 5750,
-        "tokens_out": 1018,
-        "llm_calls": 0,
+        "latency_ms": 19474,
+        "tokens_in": 9351,
+        "tokens_out": 819,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2806,7 +2806,7 @@
           "go_sqli_db_query_sprintf"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4552,
+        "latency_ms": 4565,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2823,7 +2823,7 @@
         "mode": "secureflow_full",
         "decision": "FAIL",
         "decision_correct": true,
-        "risk_score": 85,
+        "risk_score": 72,
         "total_findings": 3,
         "true_positives": 1,
         "false_positives": 2,
@@ -2832,10 +2832,10 @@
           "go_sqli_db_query_sprintf"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8686,
-        "tokens_in": 6612,
-        "tokens_out": 1219,
-        "llm_calls": 0,
+        "latency_ms": 22573,
+        "tokens_in": 11976,
+        "tokens_out": 1446,
+        "llm_calls": 8,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -2883,7 +2883,7 @@
           "java_xxe_documentbuilderfactory"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4465,
+        "latency_ms": 4337,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2900,7 +2900,7 @@
         "mode": "secureflow_full",
         "decision": "FAIL",
         "decision_correct": true,
-        "risk_score": 75,
+        "risk_score": 82,
         "total_findings": 3,
         "true_positives": 1,
         "false_positives": 2,
@@ -2909,11 +2909,11 @@
           "java_xxe_documentbuilderfactory"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8915,
-        "tokens_in": 6704,
-        "tokens_out": 1245,
-        "llm_calls": 0,
-        "patches_attempted": 1,
+        "latency_ms": 25362,
+        "tokens_in": 13805,
+        "tokens_out": 1558,
+        "llm_calls": 9,
+        "patches_attempted": 2,
         "patches_verified": 0,
         "scanner_errors": {
           "grype": "skipped: no dependency manifests changed",
@@ -2960,7 +2960,7 @@
           "php_sqli_mysqli_query"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4329,
+        "latency_ms": 4583,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -2977,7 +2977,7 @@
         "mode": "secureflow_full",
         "decision": "FAIL",
         "decision_correct": true,
-        "risk_score": 70,
+        "risk_score": 55,
         "total_findings": 2,
         "true_positives": 1,
         "false_positives": 1,
@@ -2986,10 +2986,10 @@
           "php_sqli_mysqli_query"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8470,
-        "tokens_in": 5561,
-        "tokens_out": 1125,
-        "llm_calls": 0,
+        "latency_ms": 20737,
+        "tokens_in": 9206,
+        "tokens_out": 1313,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 1,
         "scanner_errors": {
@@ -3037,7 +3037,7 @@
           "ruby_cmdi_backtick_interpolation"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4414,
+        "latency_ms": 4539,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -3054,7 +3054,7 @@
         "mode": "secureflow_full",
         "decision": "FAIL",
         "decision_correct": true,
-        "risk_score": 47,
+        "risk_score": 60,
         "total_findings": 2,
         "true_positives": 1,
         "false_positives": 1,
@@ -3063,10 +3063,10 @@
           "ruby_cmdi_backtick_interpolation"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4708,
-        "tokens_in": 5526,
-        "tokens_out": 1127,
-        "llm_calls": 0,
+        "latency_ms": 14316,
+        "tokens_in": 7420,
+        "tokens_out": 1091,
+        "llm_calls": 5,
         "patches_attempted": 0,
         "patches_verified": 0,
         "scanner_errors": {
@@ -3114,7 +3114,7 @@
           "ts_cmdi_exec_template_literal"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 4430,
+        "latency_ms": 4546,
         "tokens_in": 0,
         "tokens_out": 0,
         "llm_calls": 0,
@@ -3131,7 +3131,7 @@
         "mode": "secureflow_full",
         "decision": "FAIL",
         "decision_correct": true,
-        "risk_score": 75,
+        "risk_score": 60,
         "total_findings": 2,
         "true_positives": 1,
         "false_positives": 1,
@@ -3140,10 +3140,10 @@
           "ts_cmdi_exec_template_literal"
         ],
         "unmatched_label_ids": [],
-        "latency_ms": 8897,
-        "tokens_in": 5878,
-        "tokens_out": 1062,
-        "llm_calls": 0,
+        "latency_ms": 22086,
+        "tokens_in": 9529,
+        "tokens_out": 1317,
+        "llm_calls": 6,
         "patches_attempted": 1,
         "patches_verified": 0,
         "scanner_errors": {
@@ -3156,7 +3156,7 @@
   ],
   "versions": {
     "secureflow_version": "0.1.0",
-    "ran_at": "2026-05-17T18:23:48.628321+00:00",
+    "ran_at": "2026-05-18T02:48:42.478613+00:00",
     "platform": "Linux-6.17.0-1013-azure-x86_64-with-glibc2.39",
     "python": "3.11.15",
     "scanners": {

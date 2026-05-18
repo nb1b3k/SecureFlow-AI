@@ -300,16 +300,20 @@ The repository ships with 40 labeled fixtures under [`tests/fixtures/`](tests/fi
 
 ### Aggregate results (40 fixtures × 2 pipeline modes, on Ubuntu CI)
 
+*Captured 2026-05-18 on the combined W1 + W5 + W15 + hardening state. See [`reports/eval_full.md`](reports/eval_full.md) for per-scenario breakdown and [`reports/eval_versions.yaml`](reports/eval_versions.yaml) for the reproducibility sidecar.*
+
 | Metric | `scanners_only` | `secureflow_full` | Δ |
 |---|---|---|---|
 | Recall | 0.61 | **0.76** | **+0.15** |
 | Precision | 0.30 | 0.25 | −0.05 |
-| **Decisions correct** | 27 / 40 (67.5%) | **32 / 40 (80%)** | **+5** |
+| **Decisions correct** | 27 / 40 (67.5%) | **30 / 40 (75%)** | **+3** |
 | True positives | 28 | 35 | +7 |
-| False positives | 65 | 105 | +40 |
-| Avg latency per scenario | 5.9 s | 8.3 s | +2.4 s |
-| LLM tokens (in / out) | 0 / 0 | 230,159 / 45,793 | — |
-| Patches generated / scanner-verified | 0 / 0 | 39 / 9 | +9 |
+| False positives | 65 | 107 | +42 |
+| Avg latency per scenario | 5.8 s | 50.8 s | +45.0 s |
+| LLM tokens (in / out) | 0 / 0 | 389,634 / 53,189 | — |
+| Patches generated / scanner-verified | 0 / 0 | 40 / 8 | +8 |
+
+The full-mode `+45s` latency on this run reflects free-tier chain failover firing on the cache-cold rebuild (~38 min total CI wall-clock). On a warm cache the same eval typically completes in ~9 min; the historic baseline at +2.4s used a warm cache. Decision counts are unaffected by latency — they're driven by the deterministic policy gate.
 
 ### Pipeline health on the same CI run
 
