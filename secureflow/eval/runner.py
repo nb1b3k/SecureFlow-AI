@@ -103,6 +103,7 @@ def _run_one(scenario: Scenario, cfg: Config, mode: PipelineMode) -> PipelineRun
         true_positives=match.tp,
         false_positives=match.fp,
         false_negatives=match.fn,
+        secondary=match.secondary,
         matched_label_ids=match.matched_label_ids,
         unmatched_label_ids=match.unmatched_label_ids,
         latency_ms=elapsed_ms,

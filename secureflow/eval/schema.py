@@ -68,6 +68,12 @@ class PipelineRun(BaseModel):
     true_positives: int
     false_positives: int
     false_negatives: int
+    # W22 — additional findings on the same target as an already-matched
+    # primary (e.g. extra CVEs on a labeled package; extra Checkov sub-
+    # checks on a labeled IaC resource). Neither TP nor FP — credited
+    # separately so the FP count reflects real false positives instead
+    # of multi-finding-per-label noise.
+    secondary: int = 0
     matched_label_ids: list[str] = Field(default_factory=list)
     unmatched_label_ids: list[str] = Field(default_factory=list)
     latency_ms: int = 0

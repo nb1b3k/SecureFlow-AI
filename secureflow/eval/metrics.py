@@ -21,13 +21,19 @@ class Aggregate:
     total_tp: int
     total_fp: int
     total_fn: int
-    decisions_correct: int
-    avg_latency_ms: int
-    total_tokens_in: int
-    total_tokens_out: int
-    total_llm_calls: int
-    patches_attempted: int
-    patches_verified: int
+    # W22 — additional findings on the same target as an already-matched
+    # primary (extra CVEs on a labeled package, extra Checkov sub-checks
+    # on a labeled IaC resource). Neither TP nor FP — surfaced separately
+    # so reviewers can tell how much of the apparent "noise" is actually
+    # legitimate adjacent findings the eval labels just didn't enumerate.
+    total_secondary: int = 0
+    decisions_correct: int = 0
+    avg_latency_ms: int = 0
+    total_tokens_in: int = 0
+    total_tokens_out: int = 0
+    total_llm_calls: int = 0
+    patches_attempted: int = 0
+    patches_verified: int = 0
 
     @property
     def precision(self) -> float:
@@ -67,6 +73,7 @@ def aggregate_for_mode(
         total_tp=sum(r.true_positives for r in runs),
         total_fp=sum(r.false_positives for r in runs),
         total_fn=sum(r.false_negatives for r in runs),
+        total_secondary=sum(getattr(r, "secondary", 0) for r in runs),
         decisions_correct=sum(1 for r in runs if r.decision_correct),
         avg_latency_ms=int(sum(r.latency_ms for r in runs) / len(runs)),
         total_tokens_in=sum(r.tokens_in for r in runs),

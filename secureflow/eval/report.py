@@ -150,6 +150,18 @@ def _render_summary(
             f"| total TP | {so.total_tp} | {sf.total_tp} | "
             f"{sf.total_tp - so.total_tp:+d} |"
         )
+        # W22 — surface "secondary" findings (extra CVEs on a labeled
+        # package, extra Checkov sub-checks on a labeled IaC resource).
+        # They don't count as TP (1 label = 1 TP) but also don't count
+        # as FP — the system correctly detected the labeled issue and
+        # these are honest related findings the eval labels just didn't
+        # enumerate. Surfacing the count keeps the metric transparent
+        # without re-inflating the FP number.
+        rows.append(
+            f"| secondary findings (not FP) | {so.total_secondary} | "
+            f"{sf.total_secondary} | "
+            f"{sf.total_secondary - so.total_secondary:+d} |"
+        )
         rows.append(
             f"| avg latency | {fmt(so, 'avg_latency_ms', 'ms')} | "
             f"{fmt(sf, 'avg_latency_ms', 'ms')} | "

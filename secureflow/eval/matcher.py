@@ -150,6 +150,13 @@ class MatchResult:
     fn: int
     matched_label_ids: list[str]
     unmatched_label_ids: list[str]
+    # W22 — secondary findings are legitimate additional findings on the
+    # same target as an already-matched primary (e.g. additional CVEs in
+    # the same vulnerable package, or additional Checkov sub-checks on
+    # the same IaC resource). They don't count as TP (1 label still
+    # equals 1 TP) but also don't count as FP — the system correctly
+    # detected the labeled issue and these are honest related findings.
+    secondary: int = 0
 
 
 def match_findings_to_labels(
@@ -158,9 +165,19 @@ def match_findings_to_labels(
     *,
     scenario_repo: str | Path | None = None,
 ) -> MatchResult:
-    """Greedy 1:1 assignment of findings to labels. Returns TP / FP / FN."""
+    """Greedy 1:1 assignment of findings to labels. Returns TP / FP / FN.
+
+    Once a label matches a primary finding, additional findings that hit
+    the same target (e.g. more CVEs in the same vulnerable package, or
+    additional Checkov sub-checks on the same IaC resource) get credited
+    as `secondary` rather than counted as FP. The matcher's job is to
+    measure how well the system identifies labeled issues; multiple
+    findings on the same target represent the same underlying issue from
+    the system's perspective, not separate false positives.
+    """
     findings_list = list(findings)
     used_finding_idxs: set[int] = set()
+    secondary_finding_idxs: set[int] = set()
     matched_label_ids: list[str] = []
     unmatched_label_ids: list[str] = []
 
@@ -189,16 +206,68 @@ def match_findings_to_labels(
         if matched_idx is not None:
             used_finding_idxs.add(matched_idx)
             matched_label_ids.append(label.id)
+            # W22 — sweep any unused findings on the same target as the
+            # primary and mark them as secondary. They neither TP nor FP.
+            primary = findings_list[matched_idx]
+            for idx, f in enumerate(findings_list):
+                if idx in used_finding_idxs or idx in secondary_finding_idxs:
+                    continue
+                if _is_secondary_match(primary, f, label, scenario_repo):
+                    secondary_finding_idxs.add(idx)
         else:
             unmatched_label_ids.append(label.id)
 
     tp = len(matched_label_ids)
     fn = len(unmatched_label_ids)
-    fp = len(findings_list) - tp
+    secondary = len(secondary_finding_idxs)
+    fp = len(findings_list) - tp - secondary
     return MatchResult(
         tp=tp,
         fp=fp,
         fn=fn,
         matched_label_ids=matched_label_ids,
         unmatched_label_ids=unmatched_label_ids,
+        secondary=secondary,
     )
+
+
+def _is_secondary_match(
+    primary: dict,
+    candidate: dict,
+    label: ExpectedLabel,
+    scenario_repo: str | Path | None,
+) -> bool:
+    """True when `candidate` is a legitimate additional finding on the
+    same target as `primary`.
+
+    Three target categories:
+
+    1. **Dependency findings** (label.type == "vulnerable_dependency"):
+       grype reports one finding per CVE per package, so Django 2.2.0
+       alone surfaces ~15 separate findings even though the developer's
+       remediation is a single `Django` upgrade. Any other grype/osv
+       finding on the same `package@version` symbol is secondary.
+
+    2. **Checkov IaC findings** (source == "checkov"): a single Terraform
+       resource often produces 5+ separate Checkov findings (encryption,
+       logging, versioning, public-access, etc.). If the label expects
+       one of them and the system flags adjacent issues, those are
+       legitimate review surface, not FP. We treat any other Checkov
+       finding on the same file as secondary.
+
+    3. **Everything else** (SAST / secrets / AI Discovery): we do NOT
+       auto-credit secondaries. Different SAST rules on the same line
+       can be genuinely different bugs (SQLi + old crypto API on the
+       same `cursor.execute` call, say). Stricter labels keep the
+       eval honest for those categories.
+    """
+    if label.type == "vulnerable_dependency":
+        ps = (primary.get("symbol") or "").lower()
+        cs = (candidate.get("symbol") or "").lower()
+        cs_source = candidate.get("source")
+        if cs_source not in {"grype", "osv"}:
+            return False
+        return bool(ps) and ps == cs
+    if primary.get("source") == "checkov" and candidate.get("source") == "checkov":
+        return _finding_path(primary, scenario_repo) == _finding_path(candidate, scenario_repo)
+    return False
