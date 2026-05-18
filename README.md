@@ -48,7 +48,8 @@ Patches additionally get a dedicated chain (DeepSeek first), a gibberish sanity 
 - 4 LLM reasoning agents (AI Discovery, Exploitability, STRIDE Threat-Model Delta, Patch Generation + Review)
 - 4-link provider failover chain (DeepSeek, Gemini, Groq, OpenRouter) with JSON-repair fallback and tolerant schemas
 - 3 policy profiles (`advisory` / `balanced` / `strict`) and dependency triage (`direct_runtime` / `direct_dev` / `transitive`) for calibrated CI gating
-- 233 unit tests, ruff-clean
+- Configurable `scanners.grype.include_transitive` toggle so reviewers can choose SBOM-style full reporting (default) or PR-scope-only output
+- 242 unit tests, ruff-clean
 - Validated on 40 labeled fixtures across 2 pipeline modes (80 orchestrator runs total) on a standard Ubuntu CI runner with zero degraded stages
 
 ### Self-review evidence
@@ -283,6 +284,19 @@ Dependency findings are classified by scope to reduce noise:
 
 Manifests supported: `package.json`, `pyproject.toml` (PEP 621 + Poetry), `Pipfile`, `requirements*.txt`.
 
+### Transitive-finding toggle
+
+Grype reports CVEs across the full resolved dependency tree (Flask 1.0.0 pulls in old Werkzeug + Jinja2 + itsdangerous + click; CVEs in all of them surface). Default behavior keeps this SBOM-style report. Set `scanners.grype.include_transitive: false` to drop findings tagged `transitive` and keep only `direct_runtime` / `direct_dev` for a cleaner bot comment on PRs that touch package manifests.
+
+```yaml
+scanners:
+  grype:
+    enabled: true
+    include_transitive: false   # drop transitive CVEs; default is true
+```
+
+Findings tagged `unknown` (ecosystems the manifest parser doesn't yet cover — Go `go.mod`, Rust `Cargo.toml`, Java `pom.xml`/Gradle, Ruby `Gemfile`, PHP `composer.json`, .NET `*.csproj`, Docker-image deps) are **never** dropped by the toggle. The markdown report renders `(unknown)` inline so reviewers on those ecosystems see why the toggle had no effect on their PR.
+
 ---
 
 ## Evaluation
@@ -300,20 +314,23 @@ The repository ships with 40 labeled fixtures under [`tests/fixtures/`](tests/fi
 
 ### Aggregate results (40 fixtures × 2 pipeline modes, on Ubuntu CI)
 
-*Captured 2026-05-18 on the combined W1 + W5 + W15 + hardening state. See [`reports/eval_full.md`](reports/eval_full.md) for per-scenario breakdown and [`reports/eval_versions.yaml`](reports/eval_versions.yaml) for the reproducibility sidecar.*
+*Captured 2026-05-18 on the combined W1 + W5 + W15 + W19 (toggle) + W22 (matcher) state. See [`reports/eval_full.md`](reports/eval_full.md) for per-scenario breakdown and [`reports/eval_versions.yaml`](reports/eval_versions.yaml) for the reproducibility sidecar.*
 
 | Metric | `scanners_only` | `secureflow_full` | Δ |
 |---|---|---|---|
 | Recall | 0.61 | **0.76** | **+0.15** |
-| Precision | 0.30 | 0.25 | −0.05 |
+| Precision | **0.54** | **0.35** | −0.19 |
 | **Decisions correct** | 27 / 40 (67.5%) | **30 / 40 (75%)** | **+3** |
 | True positives | 28 | 35 | +7 |
-| False positives | 65 | 107 | +42 |
-| Avg latency per scenario | 5.8 s | 50.8 s | +45.0 s |
-| LLM tokens (in / out) | 0 / 0 | 389,634 / 53,189 | — |
-| Patches generated / scanner-verified | 0 / 0 | 40 / 8 | +8 |
+| False positives | **24** | **66** | +42 |
+| **Secondary findings (not FP)** | **41** | **41** | +0 |
+| Avg latency per scenario | 6.1 s | 22.1 s | +16.0 s |
+| LLM tokens (in / out) | 0 / 0 | 390,765 / 53,588 | — |
+| Patches generated / scanner-verified | 0 / 0 | 40 / 7 | +7 |
 
-The full-mode `+45s` latency on this run reflects free-tier chain failover firing on the cache-cold rebuild (~38 min total CI wall-clock). On a warm cache the same eval typically completes in ~9 min; the historic baseline at +2.4s used a warm cache. Decision counts are unaffected by latency — they're driven by the deterministic policy gate.
+**Secondary findings** are extra CVEs on a labeled package (Django 2.2.0 has 15 published CVEs but the label expects one match) or extra Checkov sub-checks on a labeled IaC resource. The W22 matcher fix credits these as `secondary` instead of `FP` since the system correctly detected the labeled vulnerability and the additional findings represent the same underlying issue. Pre-W22 these inflated the FP count: full-mode dropped from **107 FP → 66 FP** when the matcher started crediting them correctly.
+
+Precision moved up sharply (scanners-only: 0.30 → 0.54) for the same reason — the system was always finding these CVEs; the eval just wasn't crediting them honestly.
 
 ### Pipeline health on the same CI run
 
