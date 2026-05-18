@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 from pathlib import PurePosixPath
 
+from secureflow.config import Config
 from secureflow.schemas.finding import Severity
 from secureflow.schemas.ids import compute_finding_id
 from secureflow.tools.grype_runner import run_grype
@@ -68,6 +69,8 @@ def dependency_scan(state: dict) -> dict:
     repo_path = pr_context.get("repo_path") or "."
     changed_files = list(pr_context.get("changed_files") or [])
     manifests = _changed_manifests(changed_files)
+    cfg = Config.model_validate(state.get("config") or {})
+    include_transitive = cfg.scanners.grype.include_transitive
 
     # Scope guard: skip the scan entirely when no dependency manifests changed.
     if changed_files and not manifests:
@@ -147,6 +150,14 @@ def dependency_scan(state: dict) -> dict:
             rec_parts.append("to a fixed version once one is published.")
 
         scope = _classify_scope(pkg_name, direct)
+
+        # W19: drop transitive findings when the user opted out of the
+        # full SBOM-style report. `unknown` is preserved on purpose —
+        # for ecosystems the manifest_parser doesn't yet cover (Go,
+        # Rust, Java, etc.) we'd rather show a finding than silently
+        # hide it.
+        if not include_transitive and scope == "transitive":
+            continue
 
         findings.append({
             "id": finding_id,

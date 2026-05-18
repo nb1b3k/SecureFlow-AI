@@ -230,9 +230,14 @@ def _render_finding(f: dict) -> list[str]:
     # Tag dependency findings with their scope (direct_runtime / direct_dev /
     # transitive / unknown) so the reviewer can tell at a glance whether a
     # CVE ships with the app, is a build-only dep, or comes in transitively.
+    # `unknown` is also rendered so reviewers on Go / Rust / Java / Ruby /
+    # PHP / .NET PRs see why the `include_transitive` toggle has no effect
+    # on those ecosystems — the manifest_parser only covers npm + Python
+    # today; everything else falls through as `unknown` and is preserved
+    # regardless of the toggle.
     if src in {"grype", "osv"}:
         scope = f.get("dependency_scope")
-        if scope and scope != "unknown":
+        if scope:
             src_label = f"{src_label} ({scope})"
     bits = [
         f"### {title}",

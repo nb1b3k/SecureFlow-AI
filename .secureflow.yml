@@ -63,6 +63,13 @@ scanners:
     enabled: true
   grype:
     enabled: true
+    # Grype reports CVEs across the full resolved dependency tree.
+    # Set `false` to drop findings tagged dependency_scope=transitive
+    # (cleaner bot comment when only direct deps need review). `unknown`
+    # scope (Go, Rust, Java, Ruby, PHP, .NET, Docker images) is never
+    # dropped — the manifest_parser doesn't classify those ecosystems
+    # yet, so the safe default is to surface findings rather than hide them.
+    include_transitive: true
   syft:
     enabled: true
   bandit:

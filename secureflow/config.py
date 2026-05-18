@@ -89,11 +89,34 @@ class ScannerToggle(BaseModel):
     config: str | None = None  # e.g. semgrep config name
 
 
+class GrypeScannerToggle(ScannerToggle):
+    """Grype reports CVEs across the full resolved dependency tree, not
+    just packages declared directly in the PR's changed manifests. On
+    fixtures with one direct vulnerable dep this can produce 30+ extra
+    findings for transitive CVEs the developer didn't introduce.
+
+    `include_transitive` controls what `dependency_agent` does with
+    findings tagged `dependency_scope=transitive` by the manifest_parser:
+
+    - True (default, current behavior): keep transitive findings. SBOM-
+      style full visibility. Best when reviewers actually want to triage
+      the whole resolved tree (e.g., security-team review of a vendor
+      upgrade PR).
+    - False: drop transitive findings from the report. Cleaner bot
+      comment focused on what the PR actually touched. Findings with
+      `dependency_scope=unknown` (unparsed manifest formats like go.mod,
+      Cargo.toml, pom.xml) are NEVER dropped — safe default that avoids
+      hiding what we couldn't classify.
+    """
+
+    include_transitive: bool = True
+
+
 class ScannersConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
     semgrep: ScannerToggle = Field(default_factory=lambda: ScannerToggle(config="auto"))
     gitleaks: ScannerToggle = Field(default_factory=ScannerToggle)
-    grype: ScannerToggle = Field(default_factory=ScannerToggle)
+    grype: GrypeScannerToggle = Field(default_factory=GrypeScannerToggle)
     syft: ScannerToggle = Field(default_factory=ScannerToggle)
     bandit: ScannerToggle = Field(default_factory=lambda: ScannerToggle(enabled=False))
     # Static IaC scanner. Covers Terraform, Dockerfile, Docker Compose,
