@@ -6,6 +6,42 @@ The deterministic side handles what scanners are good at: secret detection, SAST
 
 ---
 
+## Architecture
+
+```mermaid
+flowchart TB
+    PR([PR event]) --> CTX[context_agent<br/>diff + sensitive-file detection]
+    CTX --> SEC[secrets_scan<br/>Gitleaks]
+    CTX --> SAST[sast_scan<br/>Semgrep]
+    CTX --> DEP[dependency_scan<br/>Grype]
+    CTX --> IAC[iac_scan<br/>Checkov]
+    CTX --> AID[ai_discovery<br/>LLM]
+    SEC & SAST & DEP & IAC & AID --> NORM[normalize<br/>dedup + scope filter]
+    NORM --> THM[threat_mapping<br/>CWE / OWASP / ATT&CK]
+    THM --> ENR[enrichment<br/>OSV / CVSS]
+    ENR --> REACH[reachability filter]
+    REACH --> EXP[exploitability<br/>LLM second-opinion]
+    EXP --> PATCH[patch_generation<br/>LLM + git apply + scanner rescan + LLM review]
+    EXP --> TM[threat_model<br/>STRIDE delta LLM]
+    PATCH & TM --> DEC[policy engine<br/>PASS / WARN / FAIL]
+    DEC --> OUT([JSON · Markdown · SARIF · PR comment])
+
+    classDef llm fill:#fef3c7,stroke:#d97706
+    class AID,EXP,PATCH,TM llm
+```
+
+LLM-using nodes are shaded. Every LLM call goes through:
+
+- A cross-provider failover chain so rate-limits, schema-validation failures, and quota exhaustion route to the next provider automatically.
+- A content-addressed cache keyed on `(prompt_version, model, temperature, hashed input)` so re-pushes do not re-bill.
+- A per-PR token budget with graceful degradation when exhausted.
+- A Pydantic-validated structured-output contract.
+- A `json_repair` fallback that recovers almost-valid model output (missing key quotes, unterminated strings near `max_tokens`, missing commas) without burning an extra LLM call.
+
+Patches additionally get a dedicated chain (DeepSeek first), a gibberish sanity check that rejects mojibake before applying, and a second-opinion LLM review that confirms the patch addresses the specific vulnerability and matches the surrounding code style.
+
+---
+
 ## Status
 
 - 5 parallel scanners (Gitleaks, Semgrep, Grype, Checkov, AI Vulnerability Discovery)
@@ -51,42 +87,6 @@ for rel in manifest_paths:
 ```
 
 Two unit tests (`test_parse_rejects_path_traversal`, `test_parse_skips_oversized_manifest`) lock the fix in. The bot also flagged a missing file-size cap (DoS) — same patch addressed it. End-to-end this is the strongest evidence that the agentic-review approach catches design-level weaknesses that scanner-only tools miss: the threat-model agent isn't a marketing slide, it's reviewing this repo's own code.
-
----
-
-## Architecture
-
-```mermaid
-flowchart TB
-    PR([PR event]) --> CTX[context_agent<br/>diff + sensitive-file detection]
-    CTX --> SEC[secrets_scan<br/>Gitleaks]
-    CTX --> SAST[sast_scan<br/>Semgrep]
-    CTX --> DEP[dependency_scan<br/>Grype]
-    CTX --> IAC[iac_scan<br/>Checkov]
-    CTX --> AID[ai_discovery<br/>LLM]
-    SEC & SAST & DEP & IAC & AID --> NORM[normalize<br/>dedup + scope filter]
-    NORM --> THM[threat_mapping<br/>CWE / OWASP / ATT&CK]
-    THM --> ENR[enrichment<br/>OSV / CVSS]
-    ENR --> REACH[reachability filter]
-    REACH --> EXP[exploitability<br/>LLM second-opinion]
-    EXP --> PATCH[patch_generation<br/>LLM + git apply + scanner rescan + LLM review]
-    EXP --> TM[threat_model<br/>STRIDE delta LLM]
-    PATCH & TM --> DEC[policy engine<br/>PASS / WARN / FAIL]
-    DEC --> OUT([JSON · Markdown · SARIF · PR comment])
-
-    classDef llm fill:#fef3c7,stroke:#d97706
-    class AID,EXP,PATCH,TM llm
-```
-
-LLM-using nodes are shaded. Every LLM call goes through:
-
-- A cross-provider failover chain so rate-limits, schema-validation failures, and quota exhaustion route to the next provider automatically.
-- A content-addressed cache keyed on `(prompt_version, model, temperature, hashed input)` so re-pushes do not re-bill.
-- A per-PR token budget with graceful degradation when exhausted.
-- A Pydantic-validated structured-output contract.
-- A `json_repair` fallback that recovers almost-valid model output (missing key quotes, unterminated strings near `max_tokens`, missing commas) without burning an extra LLM call.
-
-Patches additionally get a dedicated chain (DeepSeek first), a gibberish sanity check that rejects mojibake before applying, and a second-opinion LLM review that confirms the patch addresses the specific vulnerability and matches the surrounding code style.
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`design/`](design/) for the full component catalog and per-subsystem specs.
 
