@@ -49,7 +49,7 @@ Patches additionally get a dedicated chain (DeepSeek first), a gibberish sanity 
 - 4-link provider failover chain (DeepSeek, Gemini, Groq, OpenRouter) with JSON-repair fallback and tolerant schemas
 - 3 policy profiles (`advisory` / `balanced` / `strict`) and dependency triage (`direct_runtime` / `direct_dev` / `transitive`) for calibrated CI gating
 - Configurable `scanners.grype.include_transitive` toggle so reviewers can choose SBOM-style full reporting (default) or PR-scope-only output
-- 242 unit tests, ruff-clean
+- 248 unit tests, ruff-clean
 - Validated on 40 labeled fixtures across 2 pipeline modes (80 orchestrator runs total) on a standard Ubuntu CI runner with zero degraded stages
 
 ### Self-review evidence
@@ -87,7 +87,23 @@ for rel in manifest_paths:
     # ... + 2 MiB per-manifest size cap as DoS guard
 ```
 
-Two unit tests (`test_parse_rejects_path_traversal`, `test_parse_skips_oversized_manifest`) lock the fix in. The bot also flagged a missing file-size cap (DoS) — same patch addressed it. End-to-end this is the strongest evidence that the agentic-review approach catches design-level weaknesses that scanner-only tools miss: the threat-model agent isn't a marketing slide, it's reviewing this repo's own code.
+Two unit tests (`test_parse_rejects_path_traversal`, `test_parse_skips_oversized_manifest`) lock the fix in. The bot also flagged a missing file-size cap (DoS) — same patch addressed it.
+
+#### Round 2 — the bot dogfooded itself and caught the same pattern in two more places
+
+After Round 1 shipped, the live pipeline was pointed at this repository's own source via `secureflow scan --repo .` (see [`.github/workflows/dogfood.yml`](.github/workflows/dogfood.yml)) to see what it would find. The threat-modeling agent flagged the **same path-traversal pattern** in two functions that Round 1 hadn't covered:
+
+> `secureflow/agents/ai_discovery_agent.py:103` — `_load_file_contents` builds `Path(repo_path) / rel` and reads the file without verifying the resolved path stays inside `repo_path`. A crafted `changed_files` entry of `../../etc/passwd` would have leaked system files into the LLM prompt.
+>
+> `secureflow/agents/threat_model_agent.py:202` — `_load_changed_files` had identical structure, same risk.
+
+Both functions now match Round 1's hardening — `Path.relative_to(repo)` check + a hard 4× per-file-budget size cap. The fix PR was reviewed by the bot itself, which confirmed both mitigations at **confidence 1.00**:
+
+> **Path traversal protection in agent file readers** — severity high · confidence **1.00** · Suggested: **PASS**
+>
+> Both `_load_file_contents` and `_load_changed_files` now enforce that resolved file paths stay within the repo root using `Path.relative_to(repo)`. This prevents an attacker from reading arbitrary files (e.g., `/etc/passwd`) via crafted relative paths like `../../etc/passwd`.
+
+Six unit tests in [`tests/unit/test_agent_file_reader_security.py`](tests/unit/test_agent_file_reader_security.py) lock the fix in. End-to-end this is the strongest evidence the agentic-review approach catches design-level weaknesses scanner-only tools miss: the same vulnerability class was found in three different files across two rounds, the fix PR for Round 2 was signed off by the bot at confidence 1.00, and the dogfood workflow remains available so future review rounds run themselves.
 
 See [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`design/`](design/) for the full component catalog and per-subsystem specs.
 
