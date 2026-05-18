@@ -184,6 +184,11 @@ def _load_changed_files(
     can run on ad-hoc directory scans (eval harness, local `secureflow scan`).
     Prefers source / IaC files over docs when picking the budget-bounded
     subset — threat modeling on a markdown change is rarely useful.
+
+    Path-traversal safety: `files` is treated as untrusted (PR-diff
+    derived). Each resolved path must stay inside `repo_path`; entries
+    that escape get skipped. Same `Path.relative_to(repo)` pattern as
+    `manifest_parser.parse_manifests` and `ai_discovery_agent._load_file_contents`.
     """
     from pathlib import Path
 
@@ -198,9 +203,19 @@ def _load_changed_files(
         ),
     )
     parts: list[str] = []
+    repo = Path(repo_path).resolve()
     for rel in sorted_files[:max_files]:
-        full = Path(repo_path) / rel
+        full = (repo / rel).resolve()
+        try:
+            full.relative_to(repo)
+        except ValueError:
+            continue
         if not full.exists() or not full.is_file():
+            continue
+        try:
+            if full.stat().st_size > max_bytes_per_file * 4:
+                continue
+        except OSError:
             continue
         try:
             body = full.read_text(encoding="utf-8", errors="replace")

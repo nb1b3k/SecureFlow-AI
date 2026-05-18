@@ -132,10 +132,19 @@ def _load_file_contents(
     Used when there is no git diff (ad-hoc scan of a non-git directory). The
     AI Discovery prompt can still reason about whole-file content; this also
     matches how a human reviewer would approach a small codebase.
+
+    Path-traversal safety: `files` comes from `pr_context.changed_files`,
+    which is git-diff-derived in normal CI but is treated as untrusted
+    here. Each resolved path must stay inside `repo_path`; entries that
+    escape (e.g. `../../etc/passwd`) get skipped. Matches the same
+    `Path.relative_to(repo)` pattern that `manifest_parser.parse_manifests`
+    uses — caught by the bot's own self-scan after manifest_parser was
+    hardened, see README §"Self-review evidence".
     """
     from pathlib import Path
 
     parts: list[str] = []
+    repo = Path(repo_path).resolve()
     # Prefer source files (.py/.js/.ts/...) over yaml/markdown when picking
     # the budget-bounded subset.
     sorted_files = sorted(
@@ -146,8 +155,23 @@ def _load_file_contents(
         ),
     )
     for rel in sorted_files[:max_files]:
-        full = Path(repo_path) / rel
+        full = (repo / rel).resolve()
+        try:
+            full.relative_to(repo)
+        except ValueError:
+            # Resolved path escaped the repo root — skip silently.
+            continue
         if not full.exists() or not full.is_file():
+            continue
+        try:
+            if full.stat().st_size > max_bytes_per_file * 4:
+                # Hard cap before we attempt to read — bounds memory if
+                # the file is pathologically large (e.g. a giant lockfile
+                # the LLM has no business seeing). 4x the per-file budget
+                # leaves room for the truncate path on normal large files
+                # but still rejects multi-megabyte attacks.
+                continue
+        except OSError:
             continue
         try:
             body = full.read_text(encoding="utf-8", errors="replace")
