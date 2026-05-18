@@ -214,10 +214,12 @@ The shipped workflow requests only:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
   security-events: write
+  actions: read
 ```
 
-`security-events: write` is needed only when SARIF upload is enabled. The workflow does not need write access to repository contents.
+`security-events: write` is needed only when SARIF upload is enabled. `issues: write` is required because the PR-comment update path goes through the issues API for non-review-thread comments. `actions: read` lets the `codeql-action/upload-sarif` step fetch workflow-run metadata without logging "Resource not accessible by integration" warnings. The workflow does not need write access to repository contents.
 
 ---
 
@@ -334,21 +336,21 @@ The repository ships with 40 labeled fixtures under [`tests/fixtures/`](tests/fi
 
 ### Aggregate results (40 fixtures × 2 pipeline modes, on Ubuntu CI)
 
-*Captured 2026-05-18 on the combined W1 + W5 + W15 + W19 (toggle) + W22 (matcher) state. See [`reports/eval_full.md`](reports/eval_full.md) for per-scenario breakdown and [`reports/eval_versions.yaml`](reports/eval_versions.yaml) for the reproducibility sidecar.*
+*Captured 2026-05-18 on the combined W1 + W5 + W15 + W19 (toggle) + W22 (matcher) + Round 2 hardening state. See [`reports/eval_full.md`](reports/eval_full.md) for per-scenario breakdown and [`reports/eval_versions.yaml`](reports/eval_versions.yaml) for the reproducibility sidecar.*
 
 | Metric | `scanners_only` | `secureflow_full` | Δ |
 |---|---|---|---|
-| Recall | 0.61 | **0.76** | **+0.15** |
-| Precision | **0.54** | **0.35** | −0.19 |
-| **Decisions correct** | 27 / 40 (67.5%) | **30 / 40 (75%)** | **+3** |
-| True positives | 28 | 35 | +7 |
-| False positives | **24** | **66** | +42 |
+| Recall | 0.61 | **0.78** | **+0.17** |
+| Precision | **0.54** | **0.36** | −0.18 |
+| **Decisions correct** | 27 / 40 (67.5%) | **31 / 40 (77.5%)** | **+4** |
+| True positives | 28 | 36 | +8 |
+| False positives | **24** | **65** | +41 |
 | **Secondary findings (not FP)** | **41** | **41** | +0 |
-| Avg latency per scenario | 6.1 s | 22.1 s | +16.0 s |
-| LLM tokens (in / out) | 0 / 0 | 390,765 / 53,588 | — |
-| Patches generated / scanner-verified | 0 / 0 | 40 / 7 | +7 |
+| Avg latency per scenario | 5.9 s | 19.8 s | +13.9 s |
+| LLM tokens (in / out) | 0 / 0 | 388,885 / 52,737 | — |
+| Patches generated / scanner-verified | 0 / 0 | 40 / 10 | +10 |
 
-**Secondary findings** are extra CVEs on a labeled package (Django 2.2.0 has 15 published CVEs but the label expects one match) or extra Checkov sub-checks on a labeled IaC resource. The W22 matcher fix credits these as `secondary` instead of `FP` since the system correctly detected the labeled vulnerability and the additional findings represent the same underlying issue. Pre-W22 these inflated the FP count: full-mode dropped from **107 FP → 66 FP** when the matcher started crediting them correctly.
+**Secondary findings** are extra CVEs on a labeled package (Django 2.2.0 has 15 published CVEs but the label expects one match) or extra Checkov sub-checks on a labeled IaC resource. The W22 matcher fix credits these as `secondary` instead of `FP` since the system correctly detected the labeled vulnerability and the additional findings represent the same underlying issue. Pre-W22 these inflated the FP count: full-mode dropped from **107 FP → 65 FP** when the matcher started crediting them correctly.
 
 Precision moved up sharply (scanners-only: 0.30 → 0.54) for the same reason — the system was always finding these CVEs; the eval just wasn't crediting them honestly.
 
