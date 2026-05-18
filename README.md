@@ -54,6 +54,10 @@ Patches additionally get a dedicated chain (DeepSeek first), a gibberish sanity 
 
 ### Self-review evidence
 
+The agentic-review pipeline has caught path-traversal vulnerabilities in this repository's own code twice — once on the PR that introduced the affected file, and again when the live shipping codebase was scanned by itself. Both fixes are signed off by the bot's own threat-modeling agent.
+
+#### Round 1 — bot found path-traversal in `manifest_parser` on the introducing PR
+
 The dependency-triage feature was reviewed by SecureFlow AI itself before merge. Pointing the live bot at the PR that introduced the new `manifest_parser` tool, the STRIDE Threat-Modeling Delta agent flagged a real path-traversal weakness *the human reviewer had missed*:
 
 > **Manifest parser reads arbitrary files from repo path** — `secureflow/tools/manifest_parser.py:63` · severity medium · confidence 0.70
